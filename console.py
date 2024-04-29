@@ -1,324 +1,344 @@
 #!/usr/bin/python3
-""" Console Module """
+"""
+This module defines the HBNBCommand class, which implements
+a command-line interface for an AirBnB-like application.
+"""
+
 import cmd
-import sys
-from models.base_model import BaseModel
-from models.__init__ import storage
-from models.user import User
-from models.place import Place
-from models.state import State
-from models.city import City
-from models.amenity import Amenity
-from models.review import Review
+import readline
+import re
+import shlex
+import ast
+import subprocess
+from console_commands import (
+    CreateCommand,
+    ShowCommand,
+    AllCommand,
+    DestroyCommand,
+    UpdateCommand,
+    CountCommand
+)
+from models import storage
 
 
 class HBNBCommand(cmd.Cmd):
-    """ Contains the functionality for the HBNB console"""
+    """
+    HBNBCommand class represents the command-line interface for
+    the AirBnB-like application.
+   """
 
-    # determines prompt for interactive/non-interactive modes
-    prompt = '(hbnb) ' if sys.__stdin__.isatty() else ''
+    prompt = "(hbnb) "
+    __history_file = ".airbnb_cmd_history.txt"
+    __MAX_HIST = 100
 
-    classes = {
-               'BaseModel': BaseModel, 'User': User, 'Place': Place,
-               'State': State, 'City': City, 'Amenity': Amenity,
-               'Review': Review
-              }
-    dot_cmds = ['all', 'count', 'show', 'destroy', 'update']
-    types = {
-             'number_rooms': int, 'number_bathrooms': int,
-             'max_guest': int, 'price_by_night': int,
-             'latitude': float, 'longitude': float
-            }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.__airbnb_commands = {
+            "create": CreateCommand(storage),
+            "show": ShowCommand(storage),
+            "destroy": DestroyCommand(storage),
+            "all": AllCommand(storage),
+            "update": UpdateCommand(storage),
+            "count": CountCommand(storage)
+        }
+        self.__history = []
+        self.__current_cmd = ""
 
     def preloop(self):
-        """Prints if isatty is false"""
-        if not sys.__stdin__.isatty():
-            print('(hbnb)')
+        self.load_history()
 
-    def precmd(self, line):
-        """Reformat command line for advanced command syntax.
+    def postloop(self):
+        self.save_history()
 
-        Usage: <class name>.<command>([<id> [<*args> or <**kwargs>]])
-        (Brackets denote optional fields in usage example.)
+    def do_create(self, line):
         """
-        _cmd = _cls = _id = _args = ''  # initialize line elements
+        Create a new class instance and print its id.
+        Usage: create <class>
+        """
+        self.__airbnb_commands["create"].execute()
 
-        # scan for general formating - i.e '.', '(', ')'
-        if not ('.' in line and '(' in line and ')' in line):
-            return line
+    def do_show(self, line):
+        """
+        Display the string representation of a class instance of a given id.
+        Usage: show <class> <id> or <class>.show(<id>)
+        """
+        self.__airbnb_commands["show"].execute()
 
-        try:  # parse line left to right
-            pline = line[:]  # parsed line
+    def do_destroy(self, line):
+        """
+        Delete a class instance of a given id.
+        Usage: destroy <class> <id> or <class>.destroy(<id>)
+        """
+        self.__airbnb_commands["destroy"].execute()
 
-            # isolate <class name>
-            _cls = pline[:pline.find('.')]
+    def do_all(self, line):
+        """
+        Display string representations of all instances of a given class.
+        If no class is specified, displays all instantiated objects.
 
-            # isolate and validate <command>
-            _cmd = pline[pline.find('.') + 1:pline.find('(')]
-            if _cmd not in HBNBCommand.dot_cmds:
-                raise Exception
+        Usage: all or all <class> or <class>.all()
+        """
+        self.__airbnb_commands["all"].execute()
 
-            # if parantheses contain arguments, parse them
-            pline = pline[pline.find('(') + 1:pline.find(')')]
-            if pline:
-                # partition args: (<id>, [<delim>], [<*args>])
-                pline = pline.partition(', ')  # pline convert to tuple
+    def do_count(self, line):
+        """
+        counting the number of class Object in storage.
 
-                # isolate _id, stripping quotes
-                _id = pline[0].replace('\"', '')
-                # possible bug here:
-                # empty quotes register as empty _id when replaced
+        Usage: count <class> or <class>.count()
+        """
+        self.__airbnb_commands["count"].execute()
 
-                # if arguments exist beyond _id
-                pline = pline[2].strip()  # pline is now str
-                if pline:
-                    # check for *args or **kwargs
-                    if pline[0] is '{' and pline[-1] is'}'\
-                            and type(eval(pline)) is dict:
-                        _args = pline
-                    else:
-                        _args = pline.replace(',', '')
-                        # _args = _args.replace('\"', '')
-            line = ' '.join([_cmd, _cls, _id, _args])
+    def do_update(self, line):
+        """
+        Update a class instance of a given id by adding or updating
+        a given attribute key/value pair or dictionary.
 
-        except Exception as mess:
-            pass
-        finally:
-            return line
+        Usage: update <class> <id> <attribute_name> <attribute_value> or
+              <class>.update(<id>, <attribute_name>, <attribute_value>) or
+              <class>.update(<id>, <dictionary>)
+        """
+        self.__airbnb_commands["update"].execute()
 
-    def postcmd(self, stop, line):
-        """Prints if isatty is false"""
-        if not sys.__stdin__.isatty():
-            print('(hbnb) ', end='')
-        return stop
+    def do_quit(self, line):
+        """
+        Quits the command-line interface.
+        """
+        return True
 
-    def do_quit(self, command):
-        """ Method to exit the HBNB console"""
-        exit()
+    def do_EOF(self, line):
+        """
+        Quits the command-line interface.
+        """
+        return True
 
-    def help_quit(self):
-        """ Prints the help documentation for quit  """
-        print("Exits the program with formatting\n")
+    def do_clear(self, line):
+        """
+        Clears the Screen
+        """
+        try:
+            result = subprocess.run(["clear"], capture_output=True)
+        except OSError as err:
+            print(err)
+            return
 
-    def do_EOF(self, arg):
-        """ Handles EOF to exit program """
-        print()
-        exit()
+        print(result.stderr.decode(), end="")
+        print(result.stdout.decode(), end="")
 
-    def help_EOF(self):
-        """ Prints the help documentation for EOF """
-        print("Exits the program without formatting\n")
+    def default(self, line):
+        """
+        Handles unmatched commands by delegating execution to
+        the parent class's default method. If parsing fails,
+        an error message is printed.
+
+        Parameters:
+            line (str): The command line input.
+        """
+        extracted_data = self.extract_method_call(line)
+
+        if not extracted_data:
+            super().default(line)
+            return
+
+        class_name, function_name, function_args = extracted_data
+
+        tokens = [class_name]
+
+        if isinstance(function_args, tuple):
+            tokens.extend(function_args)
+        else:
+            tokens.append(function_args)
+
+        self.__current_cmd = function_name
+        self.__airbnb_commands[function_name].set_tokens(tokens)
+        self.__airbnb_commands[function_name].execute()
+
+    def extract_method_call(self, line):
+        """
+        Extracts method call information (class name, function name, arguments)
+        from a line using regular expressions. Handles potential errors during
+        argument parsing.
+
+        Parameters:
+            line (str): The command line input.
+
+        Returns:
+            tuple or None: A tuple containing
+            (class_name, function_name, function_args) if successful,
+            None otherwise.
+        """
+        pattern = r'^([A-Z]\w*)?\s*\.\s*([A-Za-z]\w*)\s*\((.*)\)$'
+        math = re.match(pattern, line)
+        if not math:
+            return None
+
+        class_name, function_name, function_args_literal = math.groups()
+        if function_name not in self.__airbnb_commands:
+            return None
+
+        function_args = None
+        try:
+            if function_args_literal:
+                function_args = ast.literal_eval(function_args_literal)
+        except (SyntaxError, ValueError) as err:
+            print(err)
+            return None
+
+        return class_name, function_name, function_args
 
     def emptyline(self):
-        """ Overrides the emptyline method of CMD """
+        """
+        Handles empty input.
+        """
         pass
 
-    def do_create(self, args):
-        """ Create an object of any class"""
-        if not args:
-            print("** class name missing **")
-            return
-        elif args not in HBNBCommand.classes:
-            print("** class doesn't exist **")
-            return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
-        print(new_instance.id)
-        storage.save()
+    def _precmd(self, line):
+        """
+        Processes the command before execution.
+        Parameters:
+            line (str): The command line input.
+        Returns:
+            str: The processed command line input.
+        """
+        self.add_history(line)
 
-    def help_create(self):
-        """ Help information for the create method """
-        print("Creates a class of any type")
-        print("[Usage]: create <className>\n")
+        tokens = self.parse_line(line)
+        if not tokens:
+            return ""
 
-    def do_show(self, args):
-        """ Method to show an individual object """
-        new = args.partition(" ")
-        c_name = new[0]
-        c_id = new[2]
+        command = tokens[0]
 
-        # guard against trailing args
-        if c_id and ' ' in c_id:
-            c_id = c_id.partition(' ')[0]
+        self.__current_cmd = command
+        if command in self.__airbnb_commands:
+            self.__airbnb_commands[command].set_tokens(tokens[1:])
 
-        if not c_name:
-            print("** class name missing **")
-            return
+        return line.strip()
 
-        if c_name not in HBNBCommand.classes:
-            print("** class doesn't exist **")
-            return
-
-        if not c_id:
-            print("** instance id missing **")
-            return
-
-        key = c_name + "." + c_id
+    @staticmethod
+    def parse_line(line):
+        """
+        Splits a command line input string into a list of tokens using shlex.
+        Parameters:
+            line (str): The command line input string.
+        Returns:
+            list: A list of tokens parsed from the input string,
+            or an empty list if parsing fails.
+        """
         try:
-            print(storage._FileStorage__objects[key])
-        except KeyError:
-            print("** no instance found **")
+            return shlex.split(line)
+        except ValueError as err:
+            print(err)
+            return []
 
-    def help_show(self):
-        """ Help information for the show command """
-        print("Shows an individual instance of a class")
-        print("[Usage]: show <className> <objectId>\n")
+    def _postcmd(self, stop, line):
+        """
+        Processes the command after execution.
 
-    def do_destroy(self, args):
-        """ Destroys a specified object """
-        new = args.partition(" ")
-        c_name = new[0]
-        c_id = new[2]
-        if c_id and ' ' in c_id:
-            c_id = c_id.partition(' ')[0]
+        Parameters:
+            stop (bool): Flag indicating whether to stop further processing.
+            line (str): The command line input.
 
-        if not c_name:
-            print("** class name missing **")
-            return
+        Returns:
+            bool: Flag indicating whether to stop further processing.
+        """
+        if self.__current_cmd in self.__airbnb_commands:
+            self.__airbnb_commands[self.__current_cmd].reset_tokens()
 
-        if c_name not in HBNBCommand.classes:
-            print("** class doesn't exist **")
-            return
+        self.__current_cmd = ""
+        return stop
 
-        if not c_id:
-            print("** instance id missing **")
-            return
+    def onecmd(self, line):
+        """Processes a single command line and returns a boolean
+        indicating termination.
 
-        key = c_name + "." + c_id
+        This method serves as the entry point for processing a user-provided
+        command line. It performs the following steps:
 
+        1. Preprocessing: Calls the `precmd` method (if defined)
+            to potentially modify the input line before further processing.
+        2. Command Execution: Delegates the actual command execution
+            to the parent class (likely `cmd.Cmd`) by calling
+            `super().onecmd(line)`.
+           This invokes the appropriate command handling logic based
+           on the user input.
+        3. Postprocessing: Calls the `postcmd` method (if defined)
+           to perform any necessary actions after the command has
+           been processed. This allows for custom post-execution tasks.
+
+        Parameter:
+            line (str): The user-provided command line string.
+
+        Returns:
+            bool: True if the command indicates termination
+            (e.g., "quit"), False otherwise.
+        """
+        line = self._precmd(line)
+        stop = super().onecmd(line)
+        self._postcmd(stop, line)
+
+        return stop
+
+    def do_history(self, line):
+        """Displays the command history maintained by the command
+        interpreter.
+
+        This method iterates through the internal command
+        history (`self.__history`) and prints each command
+        entry along with its corresponding index number.
+        The index number can be used to recall a previous
+        command using its position in the history.
+
+        Parameter
+            line (str): The user input line (typically unused in
+            this implementation).
+        """
+        for i, line in enumerate(self.__history):
+            print(f"{i:02}. {line}")
+
+    def add_history(self, line):
+        """
+        Adds a command line input to the command history,
+        maintaining a maximum size.
+        Parameters:
+            line (str): The command line input to be added.
+        """
+        self.__history.append(line)
+        history_length = len(self.__history)
+
+        if history_length > self.__MAX_HIST:
+            self.__history.pop(0)
+
+    def load_history(self):
+        """Loads the command history from the file (if it exists)."""
         try:
-            del(storage.all()[key])
-            storage.save()
-        except KeyError:
-            print("** no instance found **")
+            with open(self.__history_file, "r") as file:
+                for line in file:
+                    line = line.strip("\n")
+                    self.__history.append(line)
+                    readline.add_history(line)
 
-    def help_destroy(self):
-        """ Help information for the destroy command """
-        print("Destroys an individual instance of a class")
-        print("[Usage]: destroy <className> <objectId>\n")
+                history_length = len(self.__history)
+                if history_length > self.__MAX_HIST:
+                    extra = history_length - self.__MAX_HIST
+                    self.__history = self.__history[extra:]
 
-    def do_all(self, args):
-        """ Shows all objects, or all objects of a class"""
-        print_list = []
+        except FileNotFoundError:
+            pass
 
-        if args:
-            args = args.split(' ')[0]  # remove possible trailing args
-            if args not in HBNBCommand.classes:
-                print("** class doesn't exist **")
-                return
-            for k, v in storage._FileStorage__objects.items():
-                if k.split('.')[0] == args:
-                    print_list.append(str(v))
-        else:
-            for k, v in storage._FileStorage__objects.items():
-                print_list.append(str(v))
+    def save_history(self):
+        """Saves the current command history to the file."""
+        with open(self.__history_file, "w") as file:
+            for line in self.__history:
+                file.write(f"{line}\n")
 
-        print(print_list)
+    def completedefault(self, *args):
+        """
+        Provides basic completion for commands without
+        specific complete_* methods.
+        """
+        modules = storage.get_models_names()
+        return [module for module in modules if module.startswith(args[0])]
 
-    def help_all(self):
-        """ Help information for the all command """
-        print("Shows all objects, or all of a class")
-        print("[Usage]: all <className>\n")
 
-    def do_count(self, args):
-        """Count current number of class instances"""
-        count = 0
-        for k, v in storage._FileStorage__objects.items():
-            if args == k.split('.')[0]:
-                count += 1
-        print(count)
-
-    def help_count(self):
-        """ """
-        print("Usage: count <class_name>")
-
-    def do_update(self, args):
-        """ Updates a certain object with new info """
-        c_name = c_id = att_name = att_val = kwargs = ''
-
-        # isolate cls from id/args, ex: (<cls>, delim, <id/args>)
-        args = args.partition(" ")
-        if args[0]:
-            c_name = args[0]
-        else:  # class name not present
-            print("** class name missing **")
-            return
-        if c_name not in HBNBCommand.classes:  # class name invalid
-            print("** class doesn't exist **")
-            return
-
-        # isolate id from args
-        args = args[2].partition(" ")
-        if args[0]:
-            c_id = args[0]
-        else:  # id not present
-            print("** instance id missing **")
-            return
-
-        # generate key from class and id
-        key = c_name + "." + c_id
-
-        # determine if key is present
-        if key not in storage.all():
-            print("** no instance found **")
-            return
-
-        # first determine if kwargs or args
-        if '{' in args[2] and '}' in args[2] and type(eval(args[2])) is dict:
-            kwargs = eval(args[2])
-            args = []  # reformat kwargs into list, ex: [<name>, <value>, ...]
-            for k, v in kwargs.items():
-                args.append(k)
-                args.append(v)
-        else:  # isolate args
-            args = args[2]
-            if args and args[0] is '\"':  # check for quoted arg
-                second_quote = args.find('\"', 1)
-                att_name = args[1:second_quote]
-                args = args[second_quote + 1:]
-
-            args = args.partition(' ')
-
-            # if att_name was not quoted arg
-            if not att_name and args[0] is not ' ':
-                att_name = args[0]
-            # check for quoted val arg
-            if args[2] and args[2][0] is '\"':
-                att_val = args[2][1:args[2].find('\"', 1)]
-
-            # if att_val was not quoted arg
-            if not att_val and args[2]:
-                att_val = args[2].partition(' ')[0]
-
-            args = [att_name, att_val]
-
-        # retrieve dictionary of current objects
-        new_dict = storage.all()[key]
-
-        # iterate through attr names and values
-        for i, att_name in enumerate(args):
-            # block only runs on even iterations
-            if (i % 2 == 0):
-                att_val = args[i + 1]  # following item is value
-                if not att_name:  # check for att_name
-                    print("** attribute name missing **")
-                    return
-                if not att_val:  # check for att_value
-                    print("** value missing **")
-                    return
-                # type cast as necessary
-                if att_name in HBNBCommand.types:
-                    att_val = HBNBCommand.types[att_name](att_val)
-
-                # update dictionary with name, value pair
-                new_dict.__dict__.update({att_name: att_val})
-
-        new_dict.save()  # save updates to file
-
-    def help_update(self):
-        """ Help information for the update class """
-        print("Updates an object with new information")
-        print("Usage: update <className> <id> <attName> <attVal>\n")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     HBNBCommand().cmdloop()
