@@ -14,11 +14,14 @@ Methods:
     - No additional methods.
 
 """
+import os
 
-from models.base_model import BaseModel
+from sqlalchemy import Column, String
+
+from models.base_model import BaseModel, Base
 
 
-class User(BaseModel):
+class User(BaseModel, Base):
     """
     User class represents a user.
 
@@ -31,8 +34,15 @@ class User(BaseModel):
     Methods:
         - No additional methods.
     """
+    __tablename__ = 'users'
 
-    email: str = ""
-    password: str = ""
-    first_name: str = ""
-    last_name: str = ""
+    if os.getenv('HBNB_TYPE_STORAGE') == "db":
+        email = Column(String(128), nullable=False, unique=True, index=True)
+        password = Column(String(128), nullable=False)
+        first_name = Column(String(128), nullable=True, index=True)
+        last_name = Column(String(128), nullable=True, index=True)
+    else:
+        email: str = ""
+        password: str = ""
+        first_name: str = ""
+        last_name: str = ""
