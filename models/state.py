@@ -1,29 +1,31 @@
-"""
-This module defines the State class, which inherits from the BaseModel class.
+#!/usr/bin/python3
+import os
 
-Classes:
-    - State
+from sqlalchemy import Column, String
+from sqlalchemy.orm import relationship
 
-Attributes:
-    - name (str): The name of the state.
-
-Methods:
-    - No additional methods.
-
-"""
-
-from models.base_model import BaseModel
+from models.base_model import BaseModel, Base
+from models.city import City
+import models
 
 
-class State(BaseModel):
-    """
-    State class represents a state.
+class State(BaseModel, Base):
+    __tablename__ = 'states'
 
-    Attributes:
-        - name (str): The name of the state.
+    if os.getenv('HBNB_TYPE_STORAGE') == "db":
+        name = Column(String(128), nullable=False, index=True)
+        cities = relationship('City', back_populates='state', passive_deletes=True)
+    else:
+        name: str = ""
 
-    Methods:
-        - No additional methods.
-    """
+        @property
+        def cities(self):
+            related_cities = []
+            cities = models.storage.all(City)
 
-    name: str = ""
+            for city in cities.values():
+                if city.state_id == self.id:
+                    related_cities.append(city)
+
+            return related_cities
+

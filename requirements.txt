@@ -1,0 +1,4 @@
+SQLAlchemy~=2.0.29
+setuptools~=60.2.0
+
+mysqlclient~=2.2.4

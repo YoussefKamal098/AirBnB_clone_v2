@@ -1,3 +1,4 @@
+SET GLOBAL validate_password.policy = 0;
 -- this script prepares a MySQL server for the project
 -- Creates a database named hbnb_dev_db if it doesn't already exist.
 CREATE DATABASE IF NOT EXISTS hbnb_dev_db;

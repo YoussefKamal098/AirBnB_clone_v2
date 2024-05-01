@@ -188,3 +188,8 @@ def parse_params(params):
         kwargs[key] = value
 
     return kwargs
+
+
+def copy_attributes(source, destination):
+    for attr_name, attr_value in vars(source).items():
+        setattr(destination, attr_name, attr_value)

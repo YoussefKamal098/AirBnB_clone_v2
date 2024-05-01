@@ -7,7 +7,13 @@ as the base class for all models in the application.
 from uuid import uuid4
 from datetime import datetime
 from copy import deepcopy
+
+from sqlalchemy import Column, String, DATETIME
+from sqlalchemy.orm import declarative_base
+
 import models
+
+Base = declarative_base()
 
 
 class BaseModel:
@@ -16,6 +22,13 @@ class BaseModel:
     """
 
     __DATE_ATTRIBUTES = ["created_at", "updated_at"]
+
+    id = Column(String(60), primary_key=True)
+    created_at = Column(DATETIME, nullable=False,
+                        default=datetime.utcnow())
+    updated_at = Column(DATETIME, nullable=False,
+                        default=datetime.utcnow(),
+                        onupdate=datetime.utcnow())
 
     def __init__(self, *args, **kwargs):
         """
@@ -46,6 +59,7 @@ class BaseModel:
         """
 
         self.updated_at = datetime.now()
+        models.storage.new(self)
         models.storage.save()
 
     def to_dict(self):
@@ -62,7 +76,12 @@ class BaseModel:
             dictionary[attribute] = getattr(self, attribute).isoformat()
 
         dictionary["__class__"] = f"{self.__class__.__name__}"
+        dictionary.pop("_sa_instance_state", None)
+
         return dictionary
+
+    def delete(self):
+        models.storage.delete(self)
 
     def __str__(self):
         """
@@ -71,5 +90,7 @@ class BaseModel:
         Returns:
         - str: String representation of the object.
         """
+        dictionary = dict(self.__dict__)
+        dictionary.pop("_sa_instance_state")
 
-        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
+        return f"[{self.__class__.__name__}] ({self.id}) {dictionary}"

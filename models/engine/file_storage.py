@@ -3,29 +3,17 @@
 
 import json
 import os
+from datetime import datetime
+
 from models.base_model import BaseModel
-from models.user import User
-from models.state import State
-from models.city import City
-from models.amenity import Amenity
-from models.place import Place
-from models.review import Review
+from models.engine.storage import Storage
 
 
-class FileStorage:
+class FileStorage(Storage):
     """FileStorage class - Handles file storage operations for objects"""
 
     __file_path = "file.json"
     __objects = {}
-    __CLASSES = {
-        "BaseModel": BaseModel,
-        "User": User,
-        "State": State,
-        "City": City,
-        "Amenity": Amenity,
-        "Place": Place,
-        "Review": Review
-    }
 
     def all(self, cls=None):
         """
@@ -64,7 +52,7 @@ class FileStorage:
             return
 
         class_name = obj.__class__.__name__
-        key = FileStorage._get_obj_key(class_name, obj.id)
+        key = self._get_obj_key(class_name, obj.id)
 
         self.__objects[key] = obj
 
@@ -112,7 +100,7 @@ class FileStorage:
             return
 
         class_name = obj.__class__.__name__
-        key = FileStorage._get_obj_key(class_name, obj.id)
+        key = self._get_obj_key(class_name, obj.id)
 
         if key in self.__objects:
             del self.__objects[key]
@@ -129,7 +117,7 @@ class FileStorage:
         if class_name not in self.get_classes_names() or not _id:
             return None
 
-        key = FileStorage._get_obj_key(class_name, _id)
+        key = self._get_obj_key(class_name, _id)
         if key not in self.__objects:
             print("** no instance found **")
             return None
@@ -147,10 +135,9 @@ class FileStorage:
         if not obj:
             return
 
-        key = FileStorage._get_obj_key(class_name, _id)
+        key = self._get_obj_key(class_name, _id)
 
         del self.__objects[key]
-        self.save()
 
     def find_all(self, class_name=""):
         """
@@ -193,7 +180,7 @@ class FileStorage:
             self._update_attribute(
                 obj, attribute_name=key, attribute_value=value)
 
-        obj.save()
+        obj.updated_at = datetime.now()
 
     @staticmethod
     def _update_attribute(obj, attribute_name, attribute_value):
@@ -262,40 +249,3 @@ class FileStorage:
             return None
 
         return _class(**dictionary)
-
-    @staticmethod
-    def _get_obj_key(class_name, _id):
-        """
-        Generates a unique key for an object based on class name and ID
-        Parameters:
-            class_name (str): the name of the class
-            _id (str): the ID of the object
-        Returns:
-            The generated key (str)
-        """
-        if not class_name or not _id:
-            return None
-
-        return f"{class_name}.{_id}"
-
-    def get_classes(self):
-        """Returns a tuple of classes"""
-        return tuple(self.__CLASSES.values())
-
-    def get_classes_names(self):
-        """Returns a tuple of model names"""
-        return tuple(self.__CLASSES.keys())
-
-    def get_class(self, class_name):
-        """
-        Returns the class corresponding to a class name
-        Parameters:
-            class_name (str): the name of the class
-        Returns:
-            The class if found (BaseModel), otherwise None
-        """
-        if class_name not in self.get_classes_names():
-            print("** class doesn't exist **")
-            return None
-
-        return self.__CLASSES.get(class_name)

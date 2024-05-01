@@ -1,33 +1,19 @@
-"""
-This module defines the City class, which inherits
-from the BaseModel class.
+#!/usr/bin/python3
+import os
 
-Classes:
-    - City
-
-Attributes:
-    - name (str): The name of the city.
-    - state_id (str): The ID of the state to which the city belongs.
-
-Methods:
-    - No additional methods.
-
-"""
-
-from models.base_model import BaseModel
+from models.base_model import BaseModel, Base
+from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 
-class City(BaseModel):
-    """
-    City class represents a city within a state.
+class City(BaseModel, Base):
+    __tablename__ = 'cities'
 
-    Attributes:
-        - name (str): The name of the city.
-        - state_id (str): The ID of the state to which the city belongs.
+    if os.getenv('HBNB_TYPE_STORAGE') == "db":
+        name = Column(String(128), nullable=False, index=True)
+        state_id = Column(String(60), ForeignKey('states.id', ondelete="CASCADE"), nullable=False)
+        state = relationship("State", back_populates="cities")
 
-    Methods:
-        - No additional methods.
-    """
-
-    name: str = ""
-    state_id: str = ""
+    else:
+        name: str = ""
+        state_id: str = ""

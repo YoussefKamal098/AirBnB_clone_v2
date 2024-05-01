@@ -7,6 +7,10 @@ a command-line interface for an AirBnB-like application.
 import cmd
 import readline
 import subprocess
+
+import models
+from utils import extract_method_call, parse_line
+
 from console_commands import (
     CreateCommand,
     ShowCommand,
@@ -15,9 +19,6 @@ from console_commands import (
     UpdateCommand,
     CountCommand
 )
-from models import storage
-
-from utils import extract_method_call, parse_line
 
 
 class HBNBCommand(cmd.Cmd):
@@ -34,12 +35,12 @@ class HBNBCommand(cmd.Cmd):
         super().__init__(*args, **kwargs)
 
         self.__airbnb_commands = {
-            "create": CreateCommand(storage),
-            "show": ShowCommand(storage),
-            "destroy": DestroyCommand(storage),
-            "all": AllCommand(storage),
-            "update": UpdateCommand(storage),
-            "count": CountCommand(storage)
+            "create": CreateCommand(models.storage),
+            "show": ShowCommand(models.storage),
+            "destroy": DestroyCommand(models.storage),
+            "all": AllCommand(models.storage),
+            "update": UpdateCommand(models.storage),
+            "count": CountCommand(models.storage)
         }
         self.__history = []
         self.__current_cmd = ""
@@ -287,8 +288,8 @@ class HBNBCommand(cmd.Cmd):
         Provides basic completion for commands without
         specific complete_* methods.
         """
-        modules = storage.get_classes_names()
-        return [module for module in modules if module.startswith(args[0])]
+        classes = models.storage.get_classes_names()
+        return [module for module in classes if module.startswith(args[0])]
 
 
 if __name__ == '__main__':

@@ -293,8 +293,7 @@ class CreateCommand(AirBnBCommand):
         instance = _class(**kwargs)
         print(instance.id)
 
-        self._storage.new(instance)
-        self._storage.save()
+        instance.save()
 
 
 class ShowCommand(AirBnBCommand):
@@ -373,6 +372,7 @@ class DestroyCommand(AirBnBCommand):
 
         _class, instance = class_instance
         self._storage.remove(_class.__name__, instance.id)
+        self._storage.save()
 
 
 class AllCommand(AirBnBCommand):
@@ -603,6 +603,7 @@ class UpdateWithNameValuePairCommand(AbstractUpdateCommand):
 
         _class, instance = class_instance
         self._storage.update(_class.__name__, instance.id, **{name: value})
+        self._storage.save()
 
 
 class UpdateWithDictCommand(AbstractUpdateCommand):
@@ -675,6 +676,7 @@ class UpdateWithDictCommand(AbstractUpdateCommand):
         _class, instance = class_instance
         self._storage.update(
             _class.__name__, instance.id, **dictionary)
+        self._storage.save()
 
 
 class CountCommand(AirBnBCommand):
