@@ -6,6 +6,7 @@ as the base class for all models in the application.
 
 from uuid import uuid4
 from datetime import datetime
+from copy import deepcopy
 import models
 
 
@@ -25,34 +26,19 @@ class BaseModel:
         - **kwargs: Arbitrary keyword arguments.
         """
 
-        if not kwargs:
-            self.id = str(uuid4())
-            self.created_at = datetime.now()
-            self.updated_at = datetime.now()
-            models.storage.new(self)
-            return
+        self.id = kwargs.pop("id", str(uuid4()))
+        for attr in self.__DATE_ATTRIBUTES:
+            value = kwargs.pop(attr, None)
+            setattr(self, attr,
+                    datetime.fromisoformat(value) if value
+                    else datetime.now())
 
-        self._assign_attributes(**kwargs)
-
-    def _assign_attributes(self, **kwargs):
-        """
-        Assigns attributes to the object based on the provided kwargs.
-
-        Parameters:
-        - **kwargs: Arbitrary keyword arguments.
-        """
-
-        attributes = tuple(kwargs.keys())
-        for attribute in attributes:
-            if attribute.startswith("__") or attribute.startswith("_"):
-                del kwargs[attribute]
-
-        for attribute, value in kwargs.items():
-            if attribute in self.__DATE_ATTRIBUTES:
-                setattr(self, attribute, datetime.fromisoformat(value))
+        for attr, value in deepcopy(kwargs).items():
+            if attr.startswith("__") or attr.startswith("_"):
+                del kwargs[attr]
                 continue
 
-            setattr(self, attribute, value)
+            setattr(self, attr, value)
 
     def save(self):
         """

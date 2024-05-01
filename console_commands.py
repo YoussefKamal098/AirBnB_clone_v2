@@ -2,8 +2,89 @@
 """
 This module defines a set of commands used in an AirBnB application.
 """
-
+from copy import deepcopy
 from abc import ABC, abstractmethod
+from utils import parse_value, parse_params
+
+
+class Tokens:
+    """
+    Tokens class manages token values and provides methods
+    to set, reset, and access them.
+
+    Attributes:
+        _default_values (dict): Default values for token attributes.
+
+    Methods:
+        __init__(**kwargs): Initializes Tokens object with optional
+        initial token values.
+        reset_tokens(): Resets all attributes to their default values.
+        set_tokens(values): Sets token values from a dictionary of
+        key-value pairs.
+        __setattr__(key, value): Sets the value of a token attribute.
+        __delattr__(key): Raises an AttributeError when attempting
+        to delete a token.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Initialize Tokens object with optional initial token values.
+
+        Args:
+            **kwargs: Arbitrary keyword arguments representing token
+            attributes.
+        """
+        kwargs.update({"_default_values": deepcopy(kwargs)})
+        self.__dict__.update(kwargs)
+
+    def reset_tokens(self):
+        """
+        Reset all attributes to their default values.
+        """
+        self.__dict__.update(
+            deepcopy(self.__dict__.get("_default_values", {})))
+
+    def set_tokens(self, values):
+        """
+        Set token values from a dictionary of key-value pairs.
+
+        Args:
+            values (dict): A dictionary of key-value pairs
+            representing token attributes.
+        """
+        for key, value in values.items():
+            setattr(self, key, value)
+
+    def __setattr__(self, key, value):
+        """
+        Set the value of a token attribute.
+
+        Raises:
+            AttributeError: If attempting to add a new token.
+            TypeError: If the assigned value's type does
+            not match the token's type.
+
+        Args:
+            key (str): Name of the token attribute.
+            value (any): Value to assign to the token attribute.
+        """
+        if key not in self.__dict__:
+            raise AttributeError("Cannot add new token")
+        elif type(self.__dict__[key]) != type(value):
+            raise TypeError(
+                f"Cannot assign value of type {type(value).__name__} "
+                f"to token of type {type(self.__dict__[key]).__name__}"
+            )
+        self.__dict__[key] = value
+
+    def __delattr__(self, key):
+        """
+        Raise an AttributeError when attempting to delete a token.
+
+        Args:
+            key (str): Name of the token attribute.
+        """
+        raise AttributeError("Cannot delete token")
 
 
 class AirBnBCommand(ABC):
@@ -59,23 +140,23 @@ class AirBnBCommand(ABC):
         pass
 
     @staticmethod
-    def get_model_name(tokens):
+    def get_class_name(tokens):
         """
-        Retrieves the model name token.
+        Retrieves the class name token.
 
         Parameters:
-            tokens (dict[str, any]): A dictionary of tokens parsed
+            tokens (Tokens): command tokens
             from the command line input.
         Returns:
-            str: The model name token.
+            Union: The class name token.
         """
-        model_name = tokens.get("model_name", None)
+        class_name = tokens.class_name
 
-        if not model_name:
+        if not class_name:
             print("** class name missing **")
             return None
 
-        return model_name
+        return class_name
 
     @staticmethod
     def get_instance_id(tokens):
@@ -83,12 +164,12 @@ class AirBnBCommand(ABC):
         Retrieves the instance ID token.
 
         Parameters:
-            tokens (dict[str, any]): A dictionary of tokens parsed
+            tokens (Tokens): command tokens
             from the command line input.
         Returns:
             str: The instance ID token.
         """
-        _id = tokens.get("instance_id", None)
+        _id = tokens.instance_id
 
         if not _id:
             print("** instance id missing **")
@@ -102,13 +183,13 @@ class AirBnBCommand(ABC):
         Retrieves attribute name-value pair tokens.
 
         Parameters:
-            tokens (dict[str, any]): A dictionary of tokens parsed
+            tokens (Tokens): command tokens
             from the command line input.
         Returns:
             dict: A dictionary containing attribute name-value pair.
         """
-        attribute_name = tokens.get("attribute_name", None)
-        attribute_value = tokens.get("attribute_value", None)
+        attribute_name = tokens.attribute_name
+        attribute_value = tokens.attribute_value
 
         if not attribute_name:
             print("** attribute name missing **")
@@ -117,52 +198,57 @@ class AirBnBCommand(ABC):
             print("** value missing **")
             return None
 
-        return {"attribute_name": attribute_name,
-                "attribute_value": attribute_value}
+        attribute_value = parse_value(attribute_value)
 
-    def get_model_class(self, tokens):
+        if not attribute_value:
+            return None
+
+        return {"attribute_name": attribute_name,
+                "attribute_value":  attribute_value}
+
+    def get_class(self, tokens):
         """
-        Retrieves the model class based on the model name.
+        Retrieves the class based on the class name.
 
          Parameters:
-            tokens (dict[str, any]): A dictionary of tokens parsed
+            tokens (Tokens): command tokens
             from the command line input.
         Returns:
             class: The model class.
         """
-        model_name = self.get_model_name(tokens)
-        if not model_name:
+        class_name = self.get_class_name(tokens)
+        if not class_name:
             return None
 
-        model_class = self._storage.get_model_class(model_name)
-        if not model_class:
+        _class = self._storage.get_class(class_name)
+        if not _class:
             return None
 
-        return model_class
+        return _class
 
-    def get_model_instance(self, tokens):
+    def get_class_instance(self, tokens):
         """
-        Retrieves the model instance based on the model class and instance ID.
+        Retrieves the class instance based on the class and instance ID.
 
          Parameters:
-            tokens (dict[str, any]): A dictionary of tokens parsed
+            tokens (Tokens): command tokens
             from the command line input.
         Returns:
-            tuple: A tuple containing the model class and model instance.
+            tuple: A tuple containing the class and class instance.
         """
-        model_class = self.get_model_class(tokens)
-        if not model_class:
+        _class = self.get_class(tokens)
+        if not _class:
             return None
 
         _id = self.get_instance_id(tokens)
         if not _id:
             return None
 
-        instance = self._storage.find_obj(model_class.__name__, _id)
+        instance = self._storage.find(_class.__name__, _id)
         if not instance:
             return None
 
-        return model_class, instance
+        return _class, instance
 
 
 class CreateCommand(AirBnBCommand):
@@ -173,10 +259,7 @@ class CreateCommand(AirBnBCommand):
 
     def __init__(self, storage):
         super().__init__(storage)
-
-        self.__tokens = {
-            "model_name": None,
-        }
+        self.__tokens = Tokens(class_name="", params=())
 
     def set_tokens(self, tokens):
         """
@@ -186,28 +269,32 @@ class CreateCommand(AirBnBCommand):
             tokens (list[str]): A list of token values.
 
         """
-        for key, value in zip(self.__tokens, tokens):
-            self.__tokens[key] = value
+        self.__tokens.set_tokens(dict(zip(
+            ("class_name", "params"), (tokens[0], tuple(tokens[1:])))))
 
     def reset_tokens(self):
         """
         Resets the tokens dictionary to default values.
         """
-        for key in self.__tokens.keys():
-            self.__tokens[key] = None
+        self.__tokens.reset_tokens()
 
     def execute(self):
         """
         Executes the create command.
         """
-        model_class = self.get_model_class(self.__tokens)
-        if not model_class:
+        _class = self.get_class(self.__tokens)
+        if not _class:
             return
 
-        instance = model_class()
+        kwargs = parse_params(self.__tokens.params)
+        for attr in ["id", "created_at", "updated_at"]:
+            kwargs.pop(attr, None)
+
+        instance = _class(**kwargs)
         print(instance.id)
 
-        instance.save()
+        self._storage.new(instance)
+        self._storage.save()
 
 
 class ShowCommand(AirBnBCommand):
@@ -218,11 +305,7 @@ class ShowCommand(AirBnBCommand):
 
     def __init__(self, storage):
         super().__init__(storage)
-
-        self.__tokens = {
-            "model_name": None,
-            "instance_id": None,
-        }
+        self.__tokens = Tokens(class_name="", instance_id="")
 
     def set_tokens(self, tokens):
         """
@@ -232,25 +315,24 @@ class ShowCommand(AirBnBCommand):
             tokens (list[str]): A list of token values.
 
         """
-        for key, value in zip(self.__tokens, tokens):
-            self.__tokens[key] = value
+        self.__tokens.set_tokens(
+            dict(zip(("class_name", "instance_id"), tokens)))
 
     def reset_tokens(self):
         """
         Resets the tokens dictionary to default values.
         """
-        for key in self.__tokens.keys():
-            self.__tokens[key] = None
+        self.__tokens.reset_tokens()
 
     def execute(self):
         """
         Executes the show command.
         """
-        model_instance = self.get_model_instance(self.__tokens)
-        if not model_instance:
+        class_instance = self.get_class_instance(self.__tokens)
+        if not class_instance:
             return
 
-        _, instance = model_instance
+        _, instance = class_instance
         print(instance)
 
 
@@ -262,11 +344,7 @@ class DestroyCommand(AirBnBCommand):
 
     def __init__(self, storage):
         super().__init__(storage)
-
-        self.__tokens = {
-            "model_name": None,
-            "instance_id": None,
-        }
+        self.__tokens = Tokens(class_name="", instance_id="")
 
     def set_tokens(self, tokens):
         """
@@ -274,27 +352,27 @@ class DestroyCommand(AirBnBCommand):
 
         Parameters:
             tokens (list[str]): A list of token values.
+
         """
-        for key, value in zip(self.__tokens, tokens):
-            self.__tokens[key] = value
+        self.__tokens.set_tokens(
+            dict(zip(("class_name", "instance_id"), tokens)))
 
     def reset_tokens(self):
         """
         Resets the tokens dictionary to default values.
         """
-        for key in self.__tokens.keys():
-            self.__tokens[key] = None
+        self.__tokens.reset_tokens()
 
     def execute(self):
         """
         Executes the destroy command.
         """
-        model_instance = self.get_model_instance(self.__tokens)
-        if not model_instance:
+        class_instance = self.get_class_instance(self.__tokens)
+        if not class_instance:
             return
 
-        model_class, instance = model_instance
-        self._storage.remove_obj(model_class.__name__, instance.id)
+        _class, instance = class_instance
+        self._storage.remove(_class.__name__, instance.id)
 
 
 class AllCommand(AirBnBCommand):
@@ -305,10 +383,7 @@ class AllCommand(AirBnBCommand):
 
     def __init__(self, storage):
         super().__init__(storage)
-
-        self.__tokens = {
-            "model_name": None,
-        }
+        self.__tokens = Tokens(class_name="")
 
     def set_tokens(self, tokens):
         """
@@ -316,31 +391,30 @@ class AllCommand(AirBnBCommand):
 
         Parameters:
             tokens (list[str]): A list of token values.
+
         """
-        for key, value in zip(self.__tokens, tokens):
-            self.__tokens[key] = value
+        self.__tokens.set_tokens(dict(zip(("class_name", ), tokens)))
 
     def reset_tokens(self):
         """
         Resets the tokens dictionary to default values.
         """
-        for key in self.__tokens.keys():
-            self.__tokens[key] = None
+        self.__tokens.reset_tokens()
 
     def execute(self):
         """
         Executes the all command.
         """
-        model_name = self.__tokens.get("model_name", None)
-        if not model_name:
+        class_name = self.__tokens.class_name
+        if not class_name:
             print(self._storage.find_all())
             return
 
-        model_class = self.get_model_class(self.__tokens)
-        if not model_class:
+        _class = self.get_class(self.__tokens)
+        if not _class:
             return
 
-        print(self._storage.find_all(model_name=model_class.__name__))
+        print(self._storage.find_all(class_name=_class.__name__))
 
 
 class AbstractUpdateCommand(AirBnBCommand, ABC):
@@ -462,12 +536,12 @@ class UpdateWithNameValuePairCommand(AbstractUpdateCommand):
     def __init__(self, storage):
         super().__init__(storage)
 
-        self.__tokens = {
-            "model_name": None,
-            "instance_id": None,
-            "attribute_name": None,
-            "attribute_value": None,
-        }
+        self.__tokens = Tokens(
+            class_name="",
+            instance_id="",
+            attribute_name="",
+            attribute_value="",
+        )
 
     def check_tokens(self, tokens):
         """
@@ -492,24 +566,27 @@ class UpdateWithNameValuePairCommand(AbstractUpdateCommand):
         Sets the tokens based on the provided values.
 
         Parameters:
-            tokens (list): A list of token values.
+            tokens (list[str]): A list of token values.
+
         """
-        for key, value in zip(self.__tokens, tokens):
-            self.__tokens[key] = value
+        self.__tokens.set_tokens(dict(zip(("class_name",
+                                           "instance_id",
+                                           "attribute_name",
+                                           "attribute_value"
+                                           ), tokens)))
 
     def reset_tokens(self):
         """
         Resets the tokens dictionary to default values.
         """
-        for key in self.__tokens.keys():
-            self.__tokens[key] = None
+        self.__tokens.reset_tokens()
 
     def execute(self):
         """
         Executes the update command.
         """
-        model_instance = self.get_model_instance(self.__tokens)
-        if not model_instance:
+        class_instance = self.get_class_instance(self.__tokens)
+        if not class_instance:
             return
 
         attribute_name_value_pair = self.get_attribute_name_value_pair(
@@ -518,11 +595,14 @@ class UpdateWithNameValuePairCommand(AbstractUpdateCommand):
         if not attribute_name_value_pair:
             return
 
-        model_class, instance = model_instance
-        self._storage.update_obj_attribute(
-            model_class.__name__, instance.id,
-            **attribute_name_value_pair
-        )
+        name = attribute_name_value_pair["attribute_name"]
+        value = attribute_name_value_pair["attribute_value"]
+
+        if name in ["id", "created_at", "updated_at"]:
+            return
+
+        _class, instance = class_instance
+        self._storage.update(_class.__name__, instance.id, **{name: value})
 
 
 class UpdateWithDictCommand(AbstractUpdateCommand):
@@ -534,11 +614,11 @@ class UpdateWithDictCommand(AbstractUpdateCommand):
     def __init__(self, storage):
         super().__init__(storage)
 
-        self.__tokens = {
-            "model_name": None,
-            "instance_id": None,
-            "dictionary": None
-        }
+        self.__tokens = Tokens(
+            class_name="",
+            instance_id="",
+            dictionary={}
+        )
 
     def check_tokens(self, tokens):
         """
@@ -563,33 +643,38 @@ class UpdateWithDictCommand(AbstractUpdateCommand):
         Sets the tokens based on the provided values.
 
         Parameters:
-            tokens (list): A list of token values.
+            tokens (list[str]): A list of token values.
+
         """
-        for key, value in zip(self.__tokens, tokens):
-            self.__tokens[key] = value
+        self.__tokens.set_tokens(dict(zip(("class_name",
+                                           "instance_id",
+                                           "dictionary",
+                                           ), tokens)))
 
     def reset_tokens(self):
         """
         Resets the tokens dictionary to default values.
         """
-        for key in self.__tokens.keys():
-            self.__tokens[key] = None
+        self.__tokens.reset_tokens()
 
     def execute(self):
         """
         Executes the update command.
         """
-        model_instance = self.get_model_instance(self.__tokens)
-        if not model_instance:
+        class_instance = self.get_class_instance(self.__tokens)
+        if not class_instance:
             return
 
-        dictionary = self.__tokens.get("dictionary", None)
+        dictionary = self.__tokens.dictionary
         if not dictionary:
             return
 
-        model_class, instance = model_instance
-        self._storage.update_obj_attributes(
-            model_class.__name__, instance.id, **dictionary)
+        for attr in ["id", "created_at", "updated_at"]:
+            dictionary.pop(attr, None)
+
+        _class, instance = class_instance
+        self._storage.update(
+            _class.__name__, instance.id, **dictionary)
 
 
 class CountCommand(AirBnBCommand):
@@ -600,10 +685,7 @@ class CountCommand(AirBnBCommand):
 
     def __init__(self, storage):
         super().__init__(storage)
-
-        self.__tokens = {
-            "model_name": None,
-        }
+        self.__tokens = Tokens(class_name="")
 
     def set_tokens(self, tokens):
         """
@@ -611,23 +693,22 @@ class CountCommand(AirBnBCommand):
 
         Parameters:
             tokens (list[str]): A list of token values.
+
         """
-        for key, value in zip(self.__tokens, tokens):
-            self.__tokens[key] = value
+        self.__tokens.set_tokens(dict(zip(("class_name", ), tokens)))
 
     def reset_tokens(self):
         """
         Resets the tokens dictionary to default values.
         """
-        for key in self.__tokens.keys():
-            self.__tokens[key] = None
+        self.__tokens.reset_tokens()
 
     def execute(self):
         """
         Executes the update command.
         """
-        model_class = self.get_model_class(self.__tokens)
-        if not model_class:
+        _class = self.get_class(self.__tokens)
+        if not _class:
             return
 
-        print(self._storage.count(model_name=model_class.__name__))
+        print(self._storage.count(class_name=_class.__name__))

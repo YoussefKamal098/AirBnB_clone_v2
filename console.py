@@ -6,9 +6,6 @@ a command-line interface for an AirBnB-like application.
 
 import cmd
 import readline
-import re
-import shlex
-import ast
 import subprocess
 from console_commands import (
     CreateCommand,
@@ -19,6 +16,8 @@ from console_commands import (
     CountCommand
 )
 from models import storage
+
+from utils import extract_method_call, parse_line
 
 
 class HBNBCommand(cmd.Cmd):
@@ -134,13 +133,14 @@ class HBNBCommand(cmd.Cmd):
         Parameters:
             line (str): The command line input.
         """
-        extracted_data = self.extract_method_call(line)
-
+        extracted_data = extract_method_call(line)
         if not extracted_data:
             super().default(line)
             return
 
         class_name, function_name, function_args = extracted_data
+        if function_name not in self.__airbnb_commands:
+            return
 
         tokens = [class_name]
 
@@ -152,39 +152,6 @@ class HBNBCommand(cmd.Cmd):
         self.__current_cmd = function_name
         self.__airbnb_commands[function_name].set_tokens(tokens)
         self.__airbnb_commands[function_name].execute()
-
-    def extract_method_call(self, line):
-        """
-        Extracts method call information (class name, function name, arguments)
-        from a line using regular expressions. Handles potential errors during
-        argument parsing.
-
-        Parameters:
-            line (str): The command line input.
-
-        Returns:
-            tuple or None: A tuple containing
-            (class_name, function_name, function_args) if successful,
-            None otherwise.
-        """
-        pattern = r'^([A-Z]\w*)?\s*\.\s*([A-Za-z]\w*)\s*\((.*)\)$'
-        math = re.match(pattern, line)
-        if not math:
-            return None
-
-        class_name, function_name, function_args_literal = math.groups()
-        if function_name not in self.__airbnb_commands:
-            return None
-
-        function_args = None
-        try:
-            if function_args_literal:
-                function_args = ast.literal_eval(function_args_literal)
-        except (SyntaxError, ValueError) as err:
-            print(err)
-            return None
-
-        return class_name, function_name, function_args
 
     def emptyline(self):
         """
@@ -202,7 +169,7 @@ class HBNBCommand(cmd.Cmd):
         """
         self.add_history(line)
 
-        tokens = self.parse_line(line)
+        tokens = parse_line(line)
         if not tokens:
             return ""
 
@@ -213,22 +180,6 @@ class HBNBCommand(cmd.Cmd):
             self.__airbnb_commands[command].set_tokens(tokens[1:])
 
         return line.strip()
-
-    @staticmethod
-    def parse_line(line):
-        """
-        Splits a command line input string into a list of tokens using shlex.
-        Parameters:
-            line (str): The command line input string.
-        Returns:
-            list: A list of tokens parsed from the input string,
-            or an empty list if parsing fails.
-        """
-        try:
-            return shlex.split(line)
-        except ValueError as err:
-            print(err)
-            return []
 
     def _postcmd(self, stop, line):
         """
@@ -336,7 +287,7 @@ class HBNBCommand(cmd.Cmd):
         Provides basic completion for commands without
         specific complete_* methods.
         """
-        modules = storage.get_models_names()
+        modules = storage.get_classes_names()
         return [module for module in modules if module.startswith(args[0])]
 
 

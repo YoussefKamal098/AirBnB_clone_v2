@@ -16,7 +16,7 @@ class TestConsole(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """sets up the test console"""
-        cls.models = storage.get_models_names()
+        cls.models = storage.get_classes_names()
         try:
             os.rename("file.json", "tmp")
         except OSError:
