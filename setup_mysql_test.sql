@@ -5,7 +5,7 @@ CREATE DATABASE IF NOT EXISTS hbnb_test_db;
 CREATE USER IF NOT EXISTS 'hbnb_test'@'localhost' IDENTIFIED BY 'hbnb_test_pwd';
 
 -- Grants all privileges on the hbnb_dev_db database to the user hbnb_dev when connecting from localhost.
-GRANT ALL PRIVILEGES ON hbnb_dev_db.* TO 'hbnb_test'@'localhost';
+GRANT ALL PRIVILEGES ON hbnb_test_db.* TO 'hbnb_test'@'localhost';
 -- Reloads the grant tables and applies changes immediately.
 FLUSH PRIVILEGES;
 -- Grants the SELECT privilege on all tables in the performance_schema database to the user hbnb_dev when connecting from localhost.
