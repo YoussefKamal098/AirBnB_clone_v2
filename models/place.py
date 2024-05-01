@@ -22,12 +22,16 @@ Methods:
     - No additional methods.
 
 """
-
-from models.base_model import BaseModel
+import os
 from typing import List
 
+from sqlalchemy import Column, Float, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
-class Place(BaseModel):
+from models.base_model import BaseModel, Base
+
+
+class Place(BaseModel, Base):
     """
     Place class represents a lodging place.
 
@@ -48,15 +52,30 @@ class Place(BaseModel):
     Methods:
         - No additional methods.
     """
+    __tablename__ = 'places'
+    if os.getenv('HBNB_TYPE_STORAGE') == "db":
+        city_id = Column(String(60), ForeignKey('cities.id', onupdate="CASCADE"), nullable=False)
+        user_id = Column(String(60), ForeignKey('users.id', onupdate="CASCADE"), nullable=False)
+        name = Column(String(128), nullable=False, index=True)
+        description = Column(String(1024), nullable=True)
+        number_rooms = Column(Integer, nullable=False, default=0)
+        number_bathrooms = Column(Integer, nullable=False, default=0)
+        max_guest = Column(Integer, nullable=False, default=0)
+        price_by_night = Column(Integer, nullable=False, default=0)
+        latitude = Column(Float, nullable=True)
+        longitude = Column(Float, nullable=True)
+        user = relationship('User', back_populates='places')
+        cities = relationship('City', back_populates='places')
 
-    city_id: str = ""
-    user_id: str = ""
-    name: str = ""
-    description: str = ""
-    number_rooms: int = 0
-    number_bathrooms: int = 0
-    max_guest: int = 0
-    price_by_night: int = 0
-    latitude: float = 0.0
-    longitude: float = 0.0
-    amenity_ids: List[str] = []
+    else:
+        city_id: str = ""
+        user_id: str = ""
+        name: str = ""
+        description: str = ""
+        number_rooms: int = 0
+        number_bathrooms: int = 0
+        max_guest: int = 0
+        price_by_night: int = 0
+        latitude: float = 0.0
+        longitude: float = 0.0
+        amenity_ids: List[str] = []

@@ -17,6 +17,7 @@ Methods:
 import os
 
 from sqlalchemy import Column, String
+from sqlalchemy.orm import relationship
 
 from models.base_model import BaseModel, Base
 
@@ -41,6 +42,8 @@ class User(BaseModel, Base):
         password = Column(String(128), nullable=False)
         first_name = Column(String(128), nullable=True, index=True)
         last_name = Column(String(128), nullable=True, index=True)
+        places = relationship('Place', back_populates='user', passive_deletes=True)
+
     else:
         email: str = ""
         password: str = ""
