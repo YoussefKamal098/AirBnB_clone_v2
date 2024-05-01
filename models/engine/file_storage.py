@@ -27,13 +27,32 @@ class FileStorage:
         "Review": Review
     }
 
-    def all(self):
-        """Returns the dictionary of stored objects.
+    def all(self, cls=None):
+        """
+        Retrieve all objects stored in the storage instance.
+
+        If no specific class is provided, returns all objects of all classes.
+        If a class is provided, returns all objects of that class type.
+
+        Parameters:
+            cls (class, optional): The class type to filter the objects.
+            If not provided, returns all objects regardless of class type.
 
         Returns:
-            dict: The dictionary containing all stored objects.
+            dict or None: A dictionary containing all objects if cls is None.
+                If cls is provided, and it exists in the stored classes,
+                returns a dictionary containing objects of the specified
+                class type. Returns None if cls is provided but not found in
+                the stored classes.
         """
-        return self.__objects
+        if not cls:
+            return self.__objects
+
+        if cls not in self.get_classes():
+            return None
+
+        return {key: obj for key, obj in self.__objects.items()
+                if obj.__class__ == cls}
 
     def new(self, obj):
         """Adds a new object to the storage.
@@ -69,13 +88,34 @@ class FileStorage:
             with open(self.__file_path, "r") as file:
                 deserialized_objects = json.load(file)
 
-                self.__objects = {
+                FileStorage.__objects = {
                     key: self._deserialize(dictionary)
                     for key, dictionary in deserialized_objects.items()
                 }
 
         except (OSError, json.JSONDecodeError):
             pass
+
+    def delete(self, obj=None):
+        """
+        Delete the given object from storage if it exists.
+
+        Parameters:
+            obj (BaseModel, optional): The object to delete from storage.
+                If not provided or if the object is not an instance of any
+                class managed by the storage, the method does nothing.
+
+        Returns:
+            None
+        """
+        if not obj or type(obj) not in self.get_classes():
+            return
+
+        class_name = obj.__class__.__name__
+        key = FileStorage._get_obj_key(class_name, obj.id)
+
+        if key in self.__objects:
+            del self.__objects[key]
 
     def find(self, class_name, _id):
         """
