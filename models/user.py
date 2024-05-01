@@ -43,6 +43,7 @@ class User(BaseModel, Base):
         first_name = Column(String(128), nullable=True, index=True)
         last_name = Column(String(128), nullable=True, index=True)
         places = relationship('Place', back_populates='user', passive_deletes=True)
+        reviews = relationship('Review', back_populates='user', passive_deletes=True)
 
     else:
         email: str = ""

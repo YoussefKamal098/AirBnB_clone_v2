@@ -29,6 +29,8 @@ from sqlalchemy import Column, Float, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from models.base_model import BaseModel, Base
+from models.review import Review
+import models
 
 
 class Place(BaseModel, Base):
@@ -66,6 +68,7 @@ class Place(BaseModel, Base):
         longitude = Column(Float, nullable=True)
         user = relationship('User', back_populates='places')
         cities = relationship('City', back_populates='places')
+        reviews = relationship('Review', back_populates='place', passive_deletes=True)
 
     else:
         city_id: str = ""
@@ -79,3 +82,14 @@ class Place(BaseModel, Base):
         latitude: float = 0.0
         longitude: float = 0.0
         amenity_ids: List[str] = []
+
+        @property
+        def reviews(self):
+            related_reviews = []
+            reviews = models.storage.all(Review)
+
+            for review in reviews.values():
+                if review.place_id == self.id:
+                    related_reviews.append(review)
+
+            return related_reviews
