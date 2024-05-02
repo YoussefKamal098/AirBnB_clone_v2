@@ -195,7 +195,6 @@ class FileStorage(Storage):
             return
 
         if not hasattr(obj, attribute_name):
-            setattr(obj, attribute_name, attribute_value)
             return
 
         if attribute_name.startswith("__") or attribute_name.startswith("_"):
