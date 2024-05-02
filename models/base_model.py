@@ -7,7 +7,7 @@ as the base class for all models in the application.
 from uuid import uuid4
 from datetime import datetime
 
-from sqlalchemy import Column, String, DATETIME
+from sqlalchemy import Column, String, DATETIME, func
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -22,10 +22,10 @@ class BaseModel:
 
     id = Column(String(60), primary_key=True)
     created_at = Column(DATETIME, nullable=False,
-                        default=datetime.utcnow())
+                        default=datetime.utcnow)
     updated_at = Column(DATETIME, nullable=False,
-                        default=datetime.utcnow(),
-                        onupdate=datetime.utcnow())
+                        default=datetime.utcnow,
+                        onupdate=datetime.utcnow)
 
     def __init__(self, *args, **kwargs):
         """

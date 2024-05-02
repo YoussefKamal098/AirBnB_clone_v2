@@ -90,6 +90,7 @@ class DBStorage(Storage):
         obj = self.__session.query(_class).filter_by(id=_id).first()
         if not obj:
             print("** no instance found **")
+            return None
 
         self.__session.refresh(obj)
         return obj
@@ -98,8 +99,10 @@ class DBStorage(Storage):
         self.delete(self.find(class_name, _id))
 
     def find_all(self, class_name=""):
-        _class = self.get_class(class_name)
+        if not class_name:
+            return [str(instance) for instance in self.all().values()]
 
+        _class = self.get_class(class_name)
         if not _class:
             return []
 
@@ -117,7 +120,7 @@ class DBStorage(Storage):
         try:
             self.__session.refresh(obj)
             self.__session.query(_class)\
-                .filter_by(id=_id).first().update(kwargs)
+                .filter_by(id=_id).update(kwargs)
             self.__session.flush()
         except Exception as err:
             self.__session.rollback()

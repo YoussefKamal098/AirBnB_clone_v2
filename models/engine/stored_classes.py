@@ -2,23 +2,22 @@
 """
 This module defines a dictionary of classes used in the application.
 """
-import os
 
-from models.base_model import BaseModel
+# from models.base_model import BaseModel
 from models.user import User
 from models.state import State
 from models.city import City
-from models.amenity import Amenity
+# from models.amenity import Amenity
 from models.place import Place
 from models.review import Review
 from models.immutable_dict import ImmutableDict
 
 CLASSES = ImmutableDict({
-    "BaseModel": BaseModel,
+    # "BaseModel": BaseModel,
     "User": User,
     "State": State,
     "City": City,
-    "Amenity": Amenity,
+    # "Amenity": Amenity,
     "Place": Place,
     "Review": Review
 })
