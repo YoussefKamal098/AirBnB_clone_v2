@@ -25,6 +25,12 @@ class State(BaseModel, Base):
 
         @property
         def cities(self):
+            """
+            Retrieves the cities associated with the state.
+
+            Returns:
+                list: A list of City objects associated with the state.
+            """
             from models import storage
 
             related_cities = []

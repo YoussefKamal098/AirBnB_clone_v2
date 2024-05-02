@@ -7,7 +7,7 @@ as the base class for all models in the application.
 from uuid import uuid4
 from datetime import datetime
 
-from sqlalchemy import Column, String, DATETIME, func
+from sqlalchemy import Column, String, DATETIME
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
