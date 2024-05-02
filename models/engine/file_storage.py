@@ -160,8 +160,8 @@ class FileStorage(Storage):
         """Updates attributes of an object identified by class name and ID.
 
         This function takes a class name (string), an object ID (str), and
-        keyword arguments representing the attributes to update.
-        It iterates through the keyword arguments and calls a separate
+        keyword arguments representing the attributes to update. It iterates
+        through the keyword arguments and calls a separate
         function (presumably `update_obj_attribute`) to update each
         attribute of the specified object.
 
