@@ -113,7 +113,7 @@ class Place(BaseModel, Base):
             """
             if not obj:
                 return
-            if isinstance(obj, Amenity):
+            if not isinstance(obj, Amenity):
                 return
 
             if obj.id not in self.amenity_ids:
