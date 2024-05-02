@@ -59,9 +59,9 @@ class HBNBCommand(cmd.Cmd):
             Value syntax:
                 String: "<value>" => starts with a double quote
                     all underscores _ will be replaced by spaces .
-                    Example: You want to
-                    set the string `My little house` to the attribute `name`,
-                    the command line must be `name="My_little_house`"
+                    Example: You want to set the string `My little house`
+                    to the attribute `name`, the command line must be
+                    `name="My_little_house`"
                 Float: <unit>.<decimal> => contains a dot .
                 Integer: <number> => default case
             If any parameter doesn’t fit with these requirements or can’t be
