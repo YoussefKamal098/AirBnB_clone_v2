@@ -228,6 +228,10 @@ class FileStorage(Storage):
         return sum(1 for key in self.__objects.keys()
                    if key.startswith(class_name))
 
+    def close(self):
+        """Clean up the storage connection"""
+        pass
+
     def _deserialize(self, dictionary):
         """
         Deserializes a dictionary into an object

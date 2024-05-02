@@ -2,7 +2,7 @@
 
 from os import getenv
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from models.base_model import Base
@@ -28,16 +28,16 @@ class DBStorage(Storage):
 
     def all(self, cls=None):
         dictionary = {}
-        
+
         if cls is None:
             for _class in self.get_classes():
-                instances = _class.query.all()
+                instances = self.__session.query(_class).all()
                 class_name = _class.__name__
                 for instance in instances:
                     key = self._get_obj_key(class_name, instance.id)
                     dictionary[key] = instance
         else:
-            instances = cls.query.all()
+            instances = self.__session.query(cls).all()
             class_name = cls.__name__
             for instance in instances:
                 key = self._get_obj_key(class_name, instance.id)
@@ -52,7 +52,6 @@ class DBStorage(Storage):
         try:
             self.__session.add(obj)
             self.__session.flush()
-            self.__session.refresh(obj)
         except Exception as err:
             self.__session.rollback()
             raise err
@@ -81,17 +80,19 @@ class DBStorage(Storage):
             expire_on_commit=False
         )
 
-        session = scoped_session(session_factory)
-        Base.query = session.query_property()
-        self.__session = session()
+        self.__session = scoped_session(session_factory)()
 
     def find(self, class_name, _id):
         _class = self.get_class(class_name)
-
         if not _class:
             return None
 
-        return _class.query.filter_by(id=_id).first()
+        obj = self.__session.query(_class).filter_by(id=_id).first()
+        if not obj:
+            print("** no instance found **")
+
+        self.__session.refresh(obj)
+        return obj
 
     def remove(self, class_name, _id):
         self.delete(self.find(class_name, _id))
@@ -105,10 +106,29 @@ class DBStorage(Storage):
         return [str(instance) for instance in self.all(_class).values()]
 
     def update(self, class_name, _id, **kwargs):
-        pass
+        _class = self.get_class(class_name)
+        if not _class:
+            return
+
+        obj = self.find(class_name, _id)
+        if not obj:
+            return
+
+        try:
+            self.__session.refresh(obj)
+            self.__session.query(_class)\
+                .filter_by(id=_id).first().update(kwargs)
+            self.__session.flush()
+        except Exception as err:
+            self.__session.rollback()
+            raise err
 
     def count(self, class_name):
-        pass
+        _class = self.get_class(class_name)
+        if not _class:
+            return
+
+        return self.__session.query(func.count(_class.id)).scalar()
 
     def close(self):
         self.__session.close()

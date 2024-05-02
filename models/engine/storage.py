@@ -1,65 +1,71 @@
 #!/usr/bin/python3
+"""
+This module defines the abstract Storage class,
+which serves as the interface for interacting with
+different storage mechanisms.
+"""
+
 
 from abc import ABC, abstractmethod
-
-from models.base_model import BaseModel
-from models.user import User
-from models.state import State
-from models.city import City
-from models.amenity import Amenity
-from models.place import Place
-from models.review import Review
+from models.engine.stored_classes import CLASSES
 
 
 class Storage(ABC):
-    __CLASSES = {
-        "BaseModel": BaseModel,
-        "User": User,
-        "State": State,
-        "City": City,
-        "Amenity": Amenity,
-        "Place": Place,
-        "Review": Review
-    }
+    __CLASSES = CLASSES
 
     @abstractmethod
     def all(self, cls=None):
+        """Retrieve all objects of a given class or all classes."""
         pass
 
     @abstractmethod
     def new(self, obj):
+        """Add a new object to the storage."""
         pass
 
     @abstractmethod
     def save(self):
+        """Commit changes to the storage."""
         pass
 
     @abstractmethod
     def reload(self):
+        """Reload data from the storage."""
         pass
 
     @abstractmethod
     def delete(self, obj=None):
+        """Delete an object from the storage."""
         pass
 
     @abstractmethod
     def find(self, class_name, _id):
+        """Find an object by its class name and ID."""
         pass
 
     @abstractmethod
     def remove(self, class_name, _id):
+        """Remove an object by its class name and ID."""
         pass
 
     @abstractmethod
     def find_all(self, class_name=""):
+        """Find all objects of a given class."""
         pass
 
     @abstractmethod
     def update(self, class_name, _id, **kwargs):
+        """Update an object's attributes."""
         pass
 
     @abstractmethod
     def count(self, class_name):
+        """Count the number of objects of a given class."""
+        pass
+
+    @abstractmethod
+    def close(self):
+        """Close the storage session."""
         pass
 
     @staticmethod

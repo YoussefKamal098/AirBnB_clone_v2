@@ -11,8 +11,6 @@ from copy import deepcopy
 from sqlalchemy import Column, String, DATETIME
 from sqlalchemy.orm import declarative_base
 
-import models
-
 Base = declarative_base()
 
 
@@ -57,10 +55,11 @@ class BaseModel:
         """
         Saves the current object state to storage.
         """
+        from models import storage
 
         self.updated_at = datetime.now()
-        models.storage.new(self)
-        models.storage.save()
+        storage.new(self)
+        storage.save()
 
     def to_dict(self):
         """
@@ -81,7 +80,9 @@ class BaseModel:
         return dictionary
 
     def delete(self):
-        models.storage.delete(self)
+        from models import storage
+
+        storage.delete(self)
 
     def __str__(self):
         """

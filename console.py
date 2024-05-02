@@ -8,7 +8,6 @@ import cmd
 import readline
 import subprocess
 
-import models
 from utils import extract_method_call, parse_line
 
 from console_commands import (
@@ -31,16 +30,17 @@ class HBNBCommand(cmd.Cmd):
     __history_file = ".airbnb_cmd_history.txt"
     __MAX_HIST = 100
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, storage, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._storage = storage
 
         self.__airbnb_commands = {
-            "create": CreateCommand(models.storage),
-            "show": ShowCommand(models.storage),
-            "destroy": DestroyCommand(models.storage),
-            "all": AllCommand(models.storage),
-            "update": UpdateCommand(models.storage),
-            "count": CountCommand(models.storage)
+            "create": CreateCommand(storage),
+            "show": ShowCommand(storage),
+            "destroy": DestroyCommand(storage),
+            "all": AllCommand(storage),
+            "update": UpdateCommand(storage),
+            "count": CountCommand(storage)
         }
         self.__history = []
         self.__current_cmd = ""
@@ -54,7 +54,19 @@ class HBNBCommand(cmd.Cmd):
     def do_create(self, line):
         """
         Create a new class instance and print its id.
-        Usage: create <class>
+        Usage: create <Class name> <param 1> <param 2> <param 3>...
+            Param syntax: <key name>=<value>
+            Value syntax:
+                String: "<value>" => starts with a double quote
+                    all underscores _ will be replaced by spaces .
+                    Example: You want to
+                    set the string `My little house` to the attribute `name`,
+                    the command line must be `name="My_little_house`"
+                Float: <unit>.<decimal> => contains a dot .
+                Integer: <number> => default case
+            If any parameter doesn’t fit with these requirements or can’t be
+            recognized correctly by the program, it will be skipped
+
         """
         self.__airbnb_commands["create"].execute()
 
@@ -104,12 +116,16 @@ class HBNBCommand(cmd.Cmd):
         """
         Quits the command-line interface.
         """
+        self._storage.close()
+
         return True
 
     def do_EOF(self, line):
         """
         Quits the command-line interface.
         """
+        self._storage.close()
+
         return True
 
     def do_clear(self, line):
@@ -288,9 +304,11 @@ class HBNBCommand(cmd.Cmd):
         Provides basic completion for commands without
         specific complete_* methods.
         """
-        classes = models.storage.get_classes_names()
+
+        classes = self._storage.get_classes_names()
         return [module for module in classes if module.startswith(args[0])]
 
 
 if __name__ == '__main__':
-    HBNBCommand().cmdloop()
+    from models import storage as _storage
+    HBNBCommand(storage=_storage).cmdloop()
