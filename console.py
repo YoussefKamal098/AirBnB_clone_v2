@@ -18,6 +18,7 @@ from console_commands import (
     UpdateCommand,
     CountCommand
 )
+import models
 
 
 class HBNBCommand(cmd.Cmd):
@@ -30,17 +31,16 @@ class HBNBCommand(cmd.Cmd):
     __history_file = ".airbnb_cmd_history.txt"
     __MAX_HIST = 100
 
-    def __init__(self, storage, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._storage = storage
 
         self.__airbnb_commands = {
-            "create": CreateCommand(storage),
-            "show": ShowCommand(storage),
-            "destroy": DestroyCommand(storage),
-            "all": AllCommand(storage),
-            "update": UpdateCommand(storage),
-            "count": CountCommand(storage)
+            "create": CreateCommand(models.storage),
+            "show": ShowCommand(models.storage),
+            "destroy": DestroyCommand(models.storage),
+            "all": AllCommand(models.storage),
+            "update": UpdateCommand(models.storage),
+            "count": CountCommand(models.storage)
         }
         self.__history = []
         self.__current_cmd = ""
@@ -116,7 +116,7 @@ class HBNBCommand(cmd.Cmd):
         """
         Quits the command-line interface.
         """
-        self._storage.close()
+        models.storage.close()
 
         return True
 
@@ -124,7 +124,7 @@ class HBNBCommand(cmd.Cmd):
         """
         Quits the command-line interface.
         """
-        self._storage.close()
+        models.storage.close()
 
         return True
 
@@ -305,10 +305,9 @@ class HBNBCommand(cmd.Cmd):
         specific complete_* methods.
         """
 
-        classes = self._storage.get_classes_names()
+        classes = models.storage.get_classes_names()
         return [module for module in classes if module.startswith(args[0])]
 
 
 if __name__ == '__main__':
-    from models import storage as _storage
-    HBNBCommand(storage=_storage).cmdloop()
+    HBNBCommand().cmdloop()
