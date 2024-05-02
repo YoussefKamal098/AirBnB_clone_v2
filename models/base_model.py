@@ -6,7 +6,6 @@ as the base class for all models in the application.
 
 from uuid import uuid4
 from datetime import datetime
-from copy import deepcopy
 
 from sqlalchemy import Column, String, DATETIME
 from sqlalchemy.orm import declarative_base
@@ -36,7 +35,6 @@ class BaseModel:
         - *args: Variable-length argument list.
         - **kwargs: Arbitrary keyword arguments.
         """
-
         self.id = kwargs.pop("id", str(uuid4()))
         for attr in self.__DATE_ATTRIBUTES:
             value = kwargs.pop(attr, None)
@@ -44,9 +42,10 @@ class BaseModel:
                     datetime.fromisoformat(value) if value
                     else datetime.now())
 
-        for attr, value in deepcopy(kwargs).items():
+        for attr, value in kwargs.items():
             if attr.startswith("__") or attr.startswith("_"):
-                del kwargs[attr]
+                continue
+            if attr not in vars(self.__class__):
                 continue
 
             setattr(self, attr, value)
