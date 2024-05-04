@@ -8,13 +8,19 @@ from sqlalchemy.orm import relationship
 
 from models.base_model import BaseModel, Base
 
+parent_classes = (
+    BaseModel,
+    Base if os.getenv('HBNB_TYPE_STORAGE') == "db" else object
+)
 
-class Review(BaseModel, Base):
+
+class Review(*parent_classes):
     """
     Review class represents a review of a place.
     """
-    __tablename__ = 'reviews'
     if os.getenv('HBNB_TYPE_STORAGE') == "db":
+        __tablename__ = 'reviews'
+
         text = Column(String(1024), nullable=False)
         place_id = Column(String(60),
                           ForeignKey('places.id', ondelete="CASCADE"),

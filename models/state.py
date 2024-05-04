@@ -10,14 +10,20 @@ from sqlalchemy.orm import relationship
 from models.base_model import BaseModel, Base
 from models.city import City
 
+parent_classes = (
+    BaseModel,
+    Base if os.getenv('HBNB_TYPE_STORAGE') == "db" else object
+)
 
-class State(BaseModel, Base):
+
+class State(*parent_classes):
     """
     State class represents a state.
     """
-    __tablename__ = 'states'
 
     if os.getenv('HBNB_TYPE_STORAGE') == "db":
+        __tablename__ = 'states'
+
         name = Column(String(128), nullable=False, unique=True, index=True)
         cities = relationship('City', back_populates='state',
                               passive_deletes=True)

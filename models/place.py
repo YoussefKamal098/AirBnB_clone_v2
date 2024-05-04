@@ -26,13 +26,19 @@ place_amenity = Table(
     )
 )
 
+parent_classes = (
+    BaseModel,
+    Base if os.getenv('HBNB_TYPE_STORAGE') == "db" else object
+)
 
-class Place(BaseModel, Base):
+
+class Place(*parent_classes):
     """
     Place class represents a lodging place.
     """
-    __tablename__ = 'places'
     if os.getenv('HBNB_TYPE_STORAGE') == "db":
+        __tablename__ = 'places'
+
         city_id = Column(String(60),
                          ForeignKey('cities.id', ondelete="CASCADE"),
                          nullable=False)

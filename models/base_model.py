@@ -3,6 +3,7 @@
 This module contains the BaseModel class, which serves
 as the base class for all models in the application.
 """
+import os
 
 from uuid import uuid4
 from datetime import datetime
@@ -18,14 +19,13 @@ class BaseModel:
     Base class for all models.
     """
 
-    __DATE_ATTRIBUTES = ["created_at", "updated_at"]
-
-    id = Column(String(60), primary_key=True)
-    created_at = Column(DATETIME, nullable=False,
-                        default=datetime.utcnow)
-    updated_at = Column(DATETIME, nullable=False,
-                        default=datetime.utcnow,
-                        onupdate=datetime.utcnow)
+    if os.getenv('HBNB_TYPE_STORAGE') == 'db':
+        id = Column(String(60), primary_key=True)
+        created_at = Column(DATETIME, nullable=False,
+                            default=datetime.utcnow)
+        updated_at = Column(DATETIME, nullable=False,
+                            default=datetime.utcnow,
+                            onupdate=datetime.utcnow)
 
     def __init__(self, *args, **kwargs):
         """
@@ -36,18 +36,16 @@ class BaseModel:
         - **kwargs: Arbitrary keyword arguments.
         """
         self.id = kwargs.pop("id", str(uuid4()))
-        for attr in self.__DATE_ATTRIBUTES:
-            value = kwargs.pop(attr, None)
-            setattr(self, attr,
-                    datetime.fromisoformat(value) if value
-                    else datetime.now())
+
+        value = kwargs.pop("updated_at", None)
+        self.updated_at = datetime.fromisoformat(value) \
+            if value else datetime.now()
+
+        value = kwargs.pop("created_at", None)
+        self.created_at = datetime.fromisoformat(value) \
+            if value else datetime.now()
 
         for attr, value in kwargs.items():
-            if attr.startswith("__") or attr.startswith("_"):
-                continue
-            if attr not in vars(self.__class__):
-                continue
-
             setattr(self, attr, value)
 
     def save(self):
@@ -70,10 +68,10 @@ class BaseModel:
 
         dictionary = dict(self.__dict__)
 
-        for attribute in self.__DATE_ATTRIBUTES:
-            dictionary[attribute] = getattr(self, attribute).isoformat()
-
+        dictionary["created_at"] = getattr(self, "created_at").isoformat()
+        dictionary["updated_at"] = getattr(self, "updated_at").isoformat()
         dictionary["__class__"] = f"{self.__class__.__name__}"
+
         dictionary.pop("_sa_instance_state", None)
 
         return dictionary
@@ -91,6 +89,6 @@ class BaseModel:
         - str: String representation of the object.
         """
         dictionary = dict(self.__dict__)
-        dictionary.pop("_sa_instance_state")
+        dictionary.pop("_sa_instance_state", None)
 
         return f"[{self.__class__.__name__}] ({self.id}) {dictionary}"

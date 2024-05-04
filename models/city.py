@@ -10,14 +10,20 @@ from sqlalchemy.orm import relationship
 
 from models.base_model import BaseModel, Base
 
+parent_classes = (
+    BaseModel,
+    Base if os.getenv('HBNB_TYPE_STORAGE') == "db" else object
+)
 
-class City(BaseModel, Base):
+
+class City(*parent_classes):
     """
     City class represents a city within a geographic location.
     """
-    __tablename__ = 'cities'
 
     if os.getenv('HBNB_TYPE_STORAGE') == "db":
+        __tablename__ = 'cities'
+
         name = Column(String(128), nullable=False, index=True)
         state_id = Column(String(60),
                           ForeignKey('states.id', ondelete="CASCADE"),

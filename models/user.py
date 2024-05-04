@@ -8,14 +8,20 @@ from sqlalchemy.orm import relationship
 
 from models.base_model import BaseModel, Base
 
+parent_classes = (
+    BaseModel,
+    Base if os.getenv('HBNB_TYPE_STORAGE') == "db" else object
+)
 
-class User(BaseModel, Base):
+
+class User(*parent_classes):
     """
     User class represents a user.
     """
-    __tablename__ = 'users'
 
     if os.getenv('HBNB_TYPE_STORAGE') == "db":
+        __tablename__ = 'users'
+
         email = Column(String(128), nullable=False, unique=True, index=True)
         password = Column(String(128), nullable=False)
         first_name = Column(String(128), nullable=True, index=True)

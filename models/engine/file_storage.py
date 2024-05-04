@@ -195,18 +195,22 @@ class FileStorage(Storage):
             return
 
         if not hasattr(obj, attribute_name):
-            return
+            raise AttributeError(f"{obj.__class__.__name__}"
+                                 f"not have {attribute_name} attribute")
 
         if attribute_name.startswith("__") or attribute_name.startswith("_"):
-            return
+            raise ValueError(f"can't assign {attribute_name}"
+                             f"attribute to class {obj.__class__.__name__}")
 
         attribute = getattr(obj, attribute_name)
         if callable(attribute):
-            return
+            raise ValueError(f"can't assign {attribute_name}"
+                             f"attribute to class {obj.__class__.__name__}")
 
         attribute_type = type(attribute)
         if not isinstance(attribute_value, attribute_type):
-            return
+            raise ValueError(f"{attribute_name}"
+                             f"must by {attribute_type.__class.__name__}")
 
         setattr(obj, attribute_name, attribute_type(attribute_value))
 
