@@ -3,6 +3,7 @@
 This module defines the State class, which inherits from the BaseModel class.
 """
 import os
+
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 

@@ -5,7 +5,7 @@ which wraps a dictionary to make it immutable.
 """
 
 
-class ImmutableDict(object):
+class ImmutableDict:
     """
     ImmutableDict class wraps a dictionary to make it immutable.
     """

@@ -11,7 +11,7 @@ Classes:
 
 """
 
-from os import getenv
+import os
 
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -32,11 +32,11 @@ class DBStorage(Storage):
         Initialize the DBStorage instance.
         Connects to the database and creates a session.
         """
-        user = getenv('HBNB_MYSQL_USER')
-        pwd = getenv('HBNB_MYSQL_PWD')
-        host = getenv('HBNB_MYSQL_HOST')
-        db = getenv('HBNB_MYSQL_DB')
-        hbnb_env = getenv('HBNB_ENV')
+        user = os.getenv('HBNB_MYSQL_USER')
+        pwd = os.getenv('HBNB_MYSQL_PWD')
+        host = os.getenv('HBNB_MYSQL_HOST')
+        db = os.getenv('HBNB_MYSQL_DB')
+        hbnb_env = os.getenv('HBNB_ENV')
 
         self.__engine = create_engine(
             f"mysql+mysqldb://{user}:{pwd}@{host}/{db}", pool_pre_ping=True)

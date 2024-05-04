@@ -4,9 +4,10 @@ from the BaseModel class.
 """
 import os
 
-from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
+
+from models.base_model import BaseModel, Base
 
 
 class Amenity(BaseModel, Base):

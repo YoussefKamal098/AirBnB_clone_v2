@@ -2,6 +2,7 @@
 This module defines the Review class, which inherits from the BaseModel class.
 """
 import os
+
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship
 

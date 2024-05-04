@@ -5,9 +5,10 @@ which represents a city in the context of a geographic location.
 """
 import os
 
-from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
+
+from models.base_model import BaseModel, Base
 
 
 class City(BaseModel, Base):
