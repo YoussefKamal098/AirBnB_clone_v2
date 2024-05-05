@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 This module defines the Amenity class, which inherits
 from the BaseModel class.

@@ -22,10 +22,10 @@ class BaseModel:
     if os.getenv('HBNB_TYPE_STORAGE') == 'db':
         id = Column(String(60), primary_key=True)
         created_at = Column(DATETIME, nullable=False,
-                            default=datetime.utcnow)
+                            default=datetime.now)
         updated_at = Column(DATETIME, nullable=False,
-                            default=datetime.utcnow,
-                            onupdate=datetime.utcnow)
+                            default=datetime.now,
+                            onupdate=datetime.now)
 
     def __init__(self, *args, **kwargs):
         """

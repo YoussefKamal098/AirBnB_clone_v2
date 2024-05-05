@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 This module defines the User class, which inherits from the BaseModel class.
 """
@@ -23,9 +24,9 @@ class User(*parent_classes):
         __tablename__ = 'users'
 
         email = Column(String(128), nullable=False, unique=True, index=True)
-        password = Column(String(128), nullable=False)
-        first_name = Column(String(128), nullable=True, index=True)
-        last_name = Column(String(128), nullable=True, index=True)
+        password = Column(String(128), nullable=False, unique=True)
+        first_name = Column(String(128), index=True)
+        last_name = Column(String(128), index=True)
         places = relationship('Place', back_populates='user',
                               passive_deletes=True)
         reviews = relationship('Review', back_populates='user',
