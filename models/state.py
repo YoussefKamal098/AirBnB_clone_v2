@@ -10,9 +10,11 @@ from sqlalchemy.orm import relationship
 from models.base_model import BaseModel, Base
 from models.city import City
 
+STORAGE_TYPE = os.getenv('HBNB_TYPE_STORAGE')
+
 parent_classes = (
     BaseModel,
-    Base if os.getenv('HBNB_TYPE_STORAGE') == "db" else object
+    Base if STORAGE_TYPE == "db" else object
 )
 
 
@@ -21,7 +23,7 @@ class State(*parent_classes):
     State class represents a state.
     """
 
-    if os.getenv('HBNB_TYPE_STORAGE') == "db":
+    if STORAGE_TYPE == "db":
         __tablename__ = 'states'
 
         name = Column(String(128), nullable=False, unique=True, index=True)

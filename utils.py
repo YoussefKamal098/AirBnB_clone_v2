@@ -172,7 +172,8 @@ def parse_params(params):
         value = param[param.index("=") + 1:]
 
         try:
-            if value.startswith('"') and value.endswith('"'):
+            if ((value.startswith('"') and value.endswith('"')) or
+                    (value.startswith("'") and value.endswith("'"))):
                 # String value
                 value = value[1:-1].replace("_", " ")
             elif '.' in value:

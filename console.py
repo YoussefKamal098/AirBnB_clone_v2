@@ -8,6 +8,7 @@ import cmd
 import readline
 import subprocess
 
+from models.dict_wrapper import FrozenDict
 from utils import extract_method_call, parse_line
 
 from console_commands import (
@@ -34,14 +35,15 @@ class HBNBCommand(cmd.Cmd):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.__airbnb_commands = {
+        self.__airbnb_commands = FrozenDict({
             "create": CreateCommand(models.storage),
             "show": ShowCommand(models.storage),
             "destroy": DestroyCommand(models.storage),
             "all": AllCommand(models.storage),
             "update": UpdateCommand(models.storage),
             "count": CountCommand(models.storage)
-        }
+        })
+
         self.__history = []
         self.__current_cmd = ""
 

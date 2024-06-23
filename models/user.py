@@ -9,9 +9,11 @@ from sqlalchemy.orm import relationship
 
 from models.base_model import BaseModel, Base
 
+STORAGE_TYPE = os.getenv('HBNB_TYPE_STORAGE')
+
 parent_classes = (
     BaseModel,
-    Base if os.getenv('HBNB_TYPE_STORAGE') == "db" else object
+    Base if STORAGE_TYPE == "db" else object
 )
 
 
@@ -20,7 +22,7 @@ class User(*parent_classes):
     User class represents a user.
     """
 
-    if os.getenv('HBNB_TYPE_STORAGE') == "db":
+    if STORAGE_TYPE == "db":
         __tablename__ = 'users'
 
         email = Column(String(128), nullable=False, unique=True, index=True)

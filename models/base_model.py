@@ -4,12 +4,13 @@ This module contains the BaseModel class, which serves
 as the base class for all models in the application.
 """
 import os
-
 from uuid import uuid4
 from datetime import datetime
 
 from sqlalchemy import Column, String, DATETIME
 from sqlalchemy.orm import declarative_base
+
+STORAGE_TYPE = os.getenv('HBNB_TYPE_STORAGE')
 
 Base = declarative_base()
 
@@ -19,7 +20,7 @@ class BaseModel:
     Base class for all models.
     """
 
-    if os.getenv('HBNB_TYPE_STORAGE') == 'db':
+    if STORAGE_TYPE == 'db':
         id = Column(String(60), primary_key=True)
         created_at = Column(DATETIME, nullable=False,
                             default=datetime.now)
@@ -45,16 +46,29 @@ class BaseModel:
         self.created_at = datetime.fromisoformat(value) \
             if value else datetime.now()
 
+        kwargs.pop("__class__", None)
+
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
     def save(self):
         """
-        Saves the current object state to storage.
+        Saves the current object instance to persistent storage.
+
+        This method uses the `storage` object from the `models` module to
+        persist the current object's state. It performs the following actions:
+
+        1. Calls `storage.new(self)` to register the object with
+        the storage system.
+        2. Calls `storage.save()` to commit the changes and save the object to
+           persistent storage (e.g., database).
+
+        Raises:
+            Exception: Any exception raised by the underlying storage system
+                       during the save operation.
         """
         from models import storage
 
-        self.updated_at = datetime.now()
         storage.new(self)
         storage.save()
 
@@ -81,6 +95,11 @@ class BaseModel:
 
         storage.delete(self)
 
+    def update(self, **kwargs):
+        from models import storage
+
+        storage.update(self, **kwargs)
+
     def __str__(self):
         """
         Returns a string representation of the object.
@@ -92,3 +111,8 @@ class BaseModel:
         dictionary.pop("_sa_instance_state", None)
 
         return f"[{self.__class__.__name__}] ({self.id}) {dictionary}"
+
+    if STORAGE_TYPE != 'db':
+        def __setattr__(self, key, value):
+            object.__setattr__(self, "updated_at", datetime.now())
+            object.__setattr__(self, key, value)

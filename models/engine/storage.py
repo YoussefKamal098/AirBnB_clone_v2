@@ -5,8 +5,9 @@ which serves as the interface for interacting with
 different storage mechanisms.
 """
 
-
+import threading
 from abc import ABC, abstractmethod
+
 from models.engine.stored_classes import CLASSES
 
 
@@ -44,17 +45,12 @@ class Storage(ABC):
         pass
 
     @abstractmethod
-    def remove(self, class_name, _id):
-        """Remove an object by its class name and ID."""
-        pass
-
-    @abstractmethod
     def find_all(self, class_name=""):
         """Find all objects of a given class."""
         pass
 
     @abstractmethod
-    def update(self, class_name, _id, **kwargs):
+    def update(self, obj=None, **kwargs):
         """Update an object's attributes."""
         pass
 
@@ -100,7 +96,6 @@ class Storage(ABC):
             The class if found (BaseModel), otherwise None
         """
         if class_name not in self.get_classes_names():
-            print("** class doesn't exist **")
             return None
 
         return self.__CLASSES.get(class_name)

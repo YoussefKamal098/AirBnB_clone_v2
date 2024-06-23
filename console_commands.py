@@ -2,155 +2,80 @@
 """
 This module defines a set of commands used in an AirBnB application.
 """
-from copy import deepcopy
 from abc import ABC, abstractmethod
+
 from utils import parse_value, parse_params
-
-
-class Tokens:
-    """
-    Tokens class manages token values and provides methods
-    to set, reset, and access them.
-
-    Attributes:
-        _default_values (dict): Default values for token attributes.
-
-    Methods:
-        __init__(**kwargs): Initializes Tokens object with optional
-        initial token values.
-        reset_tokens(): Resets all attributes to their default values.
-        set_tokens(values): Sets token values from a dictionary of
-        key-value pairs.
-        __setattr__(key, value): Sets the value of a token attribute.
-        __delattr__(key): Raises an AttributeError when attempting
-        to delete a token.
-    """
-
-    def __init__(self, **kwargs):
-        """
-        Initialize Tokens object with optional initial token values.
-
-        Args:
-            **kwargs: Arbitrary keyword arguments representing token
-            attributes.
-        """
-        kwargs.update({"_default_values": deepcopy(kwargs)})
-        self.__dict__.update(kwargs)
-
-    def reset_tokens(self):
-        """
-        Reset all attributes to their default values.
-        """
-        self.__dict__.update(
-            deepcopy(self.__dict__.get("_default_values", {})))
-
-    def set_tokens(self, values):
-        """
-        Set token values from a dictionary of key-value pairs.
-
-        Args:
-            values (dict): A dictionary of key-value pairs
-            representing token attributes.
-        """
-        for key, value in values.items():
-            setattr(self, key, value)
-
-    def __setattr__(self, key, value):
-        """
-        Set the value of a token attribute.
-
-        Raises:
-            AttributeError: If attempting to add a new token.
-            TypeError: If the assigned value's type does
-            not match the token's type.
-
-        Args:
-            key (str): Name of the token attribute.
-            value (any): Value to assign to the token attribute.
-        """
-        if key not in self.__dict__:
-            raise AttributeError("Cannot add new token")
-        elif type(self.__dict__[key]) != type(value):
-            raise TypeError(
-                f"Cannot assign value of type {type(value).__name__} "
-                f"to token of type {type(self.__dict__[key]).__name__}"
-            )
-        self.__dict__[key] = value
-
-    def __delattr__(self, key):
-        """
-        Raise an AttributeError when attempting to delete a token.
-
-        Args:
-            key (str): Name of the token attribute.
-        """
-        raise AttributeError("Cannot delete token")
+from models.dict_wrapper import FrozenDict, SealedDict
 
 
 class AirBnBCommand(ABC):
     """
-    AirBnBCommand is an abstract base class for defining
-    command objects in an AirBnB application.
+    Abstract base class representing an Airbnb command.
+
+    Methods:
+        __init__(storage): Initializes the command with a storage system.
+        execute(): Abstract method to execute the command.
+        reset_tokens(): Abstract method to reset command tokens.
+        set_tokens(tokens): Abstract method to set command tokens.
+        get_class_name(tokens): Static method to extract class name
+            from command tokens.
+        get_instance_id(tokens): Static method to extract instance
+            ID from command tokens.
+        get_attribute_name_value_pair(tokens): Static method to extract
+            attribute name-value pair from command tokens.
+        get_class(tokens): Method to retrieve the class based on class name
+            from command tokens.
+        get_class_instance_pair(tokens): Method to retrieve the class
+            and instance based on class name and instance ID from command
+            tokens.
     """
 
     def __init__(self, storage):
         """
-        Initializes a new instance of the AirBnBCommand class.
+        Initializes the AirBnBCommand with a storage system.
 
         Parameters:
-            storage (FileStorage): A storage object used to interact with
-            the FileStorage.
-
+            storage: The storage system to interact with.
         """
         self._storage = storage
 
     @abstractmethod
     def execute(self):
         """
-        Abstract method to execute the specific command logic.
-
-        Subclasses must implement this method to define the behavior
-        of their respective commands (e.g., create, show, update, etc.).
+        Abstract method to execute the command.
         """
         pass
 
     @abstractmethod
     def reset_tokens(self):
         """
-        Abstract method to reset any internal tokens used by the command.
-
-        Subclasses might use tokens to store parsed information from the
-        command line input. This method ensures proper cleanup after execution.
+        Abstract method to reset command tokens.
         """
         pass
 
     @abstractmethod
     def set_tokens(self, tokens):
         """
-        Abstract method to set internal tokens based on parsed command
-        line arguments.
-
-        Subclasses might use this method to store information extracted
-        from the command line for later usage during execution.
+        Abstract method to set command tokens.
 
         Parameters:
-            tokens (list[str]): A list of tokens parsed from the command
-            line input.
+            tokens (list[str]): list containing command tokens.
         """
         pass
 
     @staticmethod
     def get_class_name(tokens):
         """
-        Retrieves the class name token.
+        Static method to extract class name from command tokens.
 
         Parameters:
-            tokens (Tokens): command tokens
-            from the command line input.
+            tokens (SealedDict): Dictionary containing command tokens.
+
         Returns:
-            Union: The class name token.
+            str: The class name extracted from the tokens,
+            or None if not found.
         """
-        class_name = tokens.class_name
+        class_name = tokens['class_name']
 
         if not class_name:
             print("** class name missing **")
@@ -161,15 +86,16 @@ class AirBnBCommand(ABC):
     @staticmethod
     def get_instance_id(tokens):
         """
-        Retrieves the instance ID token.
+        Static method to extract instance ID from command tokens.
 
         Parameters:
-            tokens (Tokens): command tokens
-            from the command line input.
+            tokens (SealedDict): Dictionary containing command tokens.
+
         Returns:
-            str: The instance ID token.
+            str: The instance ID extracted from the tokens,
+            or None if not found.
         """
-        _id = tokens.instance_id
+        _id = tokens['instance_id']
 
         if not _id:
             print("** instance id missing **")
@@ -180,16 +106,18 @@ class AirBnBCommand(ABC):
     @staticmethod
     def get_attribute_name_value_pair(tokens):
         """
-        Retrieves attribute name-value pair tokens.
+        Static method to extract attribute name-value pair from command tokens.
 
         Parameters:
-            tokens (Tokens): command tokens
-            from the command line input.
+            tokens (SealedDict): Dictionary containing command tokens.
+
         Returns:
-            dict: A dictionary containing attribute name-value pair.
+            tuple: A tuple containing the attribute name and
+                value extracted from the tokens, or None if either the
+                attribute name or value is missing or invalid.
         """
-        attribute_name = tokens.attribute_name
-        attribute_value = tokens.attribute_value
+        attribute_name = tokens['attribute_name']
+        attribute_value = tokens['attribute_value']
 
         if not attribute_name:
             print("** attribute name missing **")
@@ -203,18 +131,18 @@ class AirBnBCommand(ABC):
         if not attribute_value:
             return None
 
-        return {"attribute_name": attribute_name,
-                "attribute_value":  attribute_value}
+        return attribute_name, attribute_value
 
     def get_class(self, tokens):
         """
-        Retrieves the class based on the class name.
+        Method to retrieve the class based on class name from command tokens.
 
-         Parameters:
-            tokens (Tokens): command tokens
-            from the command line input.
+        Parameters:
+            tokens (SealedDict): Dictionary containing command tokens.
+
         Returns:
-            class: The model class.
+            class: The class corresponding to the class name
+                extracted from the tokens, or None if the class doesn't exist.
         """
         class_name = self.get_class_name(tokens)
         if not class_name:
@@ -222,19 +150,24 @@ class AirBnBCommand(ABC):
 
         _class = self._storage.get_class(class_name)
         if not _class:
+            print("** class doesn't exist **")
             return None
 
         return _class
 
-    def get_class_instance(self, tokens):
+    def get_class_instance_pair(self, tokens):
         """
-        Retrieves the class instance based on the class and instance ID.
+        Method to retrieve the class and instance based on class name
+        and instance ID from command tokens.
 
-         Parameters:
-            tokens (Tokens): command tokens
-            from the command line input.
+        Parameters:
+            tokens (SealedDict): Dictionary containing command tokens.
+
         Returns:
-            tuple: A tuple containing the class and class instance.
+            tuple: A tuple containing the class and instance corresponding
+                    to the class name and instance ID extracted from the
+                    tokens, or None if either the class or instance is
+                    not found.
         """
         _class = self.get_class(tokens)
         if not _class:
@@ -246,6 +179,7 @@ class AirBnBCommand(ABC):
 
         instance = self._storage.find(_class.__name__, _id)
         if not instance:
+            print("** no instance found **")
             return None
 
         return _class, instance
@@ -253,44 +187,50 @@ class AirBnBCommand(ABC):
 
 class CreateCommand(AirBnBCommand):
     """
-    CreateCommand is a concrete subclass of AirBnBCommand for
-    creating new objects.
+    CreateCommand is a concrete subclass of AirBnBCommand for creating objects.
+
+    Methods:
+        __init__(storage): Initializes the CreateCommand with a storage system.
+        set_tokens(tokens): Sets command tokens for creating objects.
+        reset_tokens(): Resets command tokens.
+        execute(): Executes the create command.
     """
 
     def __init__(self, storage):
+        """
+        Initializes the CreateCommand with a storage system.
+
+        Parameters:
+            storage: The storage system to interact with.
+        """
         super().__init__(storage)
-        self.__tokens = Tokens(class_name="", params=())
+        self.__tokens = SealedDict({'class_name': "", 'params': ()})
 
     def set_tokens(self, tokens):
         """
-        Sets the tokens based on the provided values.
+        Sets command tokens for creating objects.
 
         Parameters:
-            tokens (list[str]): A list of token values.
-
+            tokens (list): A list of tokens representing the object to create.
         """
-        self.__tokens.set_tokens(dict(zip(
-            ("class_name", "params"), (tokens[0], tuple(tokens[1:])))))
+        for key, value in zip(self.__tokens,
+                              ["".join(tokens[:1]), tuple(tokens[1:])]):
+            self.__tokens[key] = value
 
     def reset_tokens(self):
-        """
-        Resets the tokens dictionary to default values.
-        """
-        self.__tokens.reset_tokens()
+        """Resets command tokens."""
+        self.__tokens['class_name'] = ""
+        self.__tokens['params'] = ()
 
     def execute(self):
-        """
-        Executes the create command.
-        """
+        """Executes the create command."""
         _class = self.get_class(self.__tokens)
         if not _class:
             return
 
-        kwargs = parse_params(self.__tokens.params)
-        for attr in ["id", "created_at", "updated_at"]:
-            kwargs.pop(attr, None)
+        params = parse_params(self.__tokens['params'])
 
-        instance = _class(**kwargs)
+        instance = _class(**params)
         print(instance.id)
 
         instance.save()
@@ -298,40 +238,47 @@ class CreateCommand(AirBnBCommand):
 
 class ShowCommand(AirBnBCommand):
     """
-    ShowCommand is a concrete subclass of AirBnBCommand for
-    displaying object details.
+    ShowCommand is a concrete subclass of AirBnBCommand for showing objects.
+
+    Methods:
+        __init__(storage): Initializes the ShowCommand with a storage system.
+        set_tokens(tokens): Sets command tokens for showing objects.
+        reset_tokens(): Resets command tokens.
+        execute(): Executes the show command.
     """
 
     def __init__(self, storage):
+        """
+        Initializes the ShowCommand with a storage system.
+
+        Parameters:
+            storage: The storage system to interact with.
+        """
         super().__init__(storage)
-        self.__tokens = Tokens(class_name="", instance_id="")
+        self.__tokens = SealedDict({'class_name': "", 'instance_id': ""})
 
     def set_tokens(self, tokens):
         """
-        Sets the tokens based on the provided values.
+        Sets command tokens for showing objects.
 
         Parameters:
-            tokens (list[str]): A list of token values.
-
+            tokens (list): A list of tokens representing the object to show.
         """
-        self.__tokens.set_tokens(
-            dict(zip(("class_name", "instance_id"), tokens)))
+        self.__tokens['class_name'] = tokens[0]
+        self.__tokens['instance_id'] = tokens[1]
 
     def reset_tokens(self):
-        """
-        Resets the tokens dictionary to default values.
-        """
-        self.__tokens.reset_tokens()
+        """Resets command tokens."""
+        self.__tokens['class_name'] = ""
+        self.__tokens['instance_id'] = ""
 
     def execute(self):
-        """
-        Executes the show command.
-        """
-        class_instance = self.get_class_instance(self.__tokens)
-        if not class_instance:
+        """Executes the show command."""
+        class_instance_pair = self.get_class_instance_pair(self.__tokens)
+        if not class_instance_pair:
             return
 
-        _, instance = class_instance
+        _, instance = class_instance_pair
         print(instance)
 
 
@@ -339,73 +286,91 @@ class DestroyCommand(AirBnBCommand):
     """
     DestroyCommand is a concrete subclass of AirBnBCommand for
     deleting objects.
+
+    Methods:
+        __init__(storage): Initializes the DestroyCommand with a
+        storage system.
+        set_tokens(tokens): Sets command tokens for deleting objects.
+        reset_tokens(): Resets command tokens.
+        execute(): Executes the destroy command.
     """
 
     def __init__(self, storage):
+        """
+        Initializes the DestroyCommand with a storage system.
+
+        Parameters:
+            storage: The storage system to interact with.
+        """
         super().__init__(storage)
-        self.__tokens = Tokens(class_name="", instance_id="")
+        self.__tokens = SealedDict({'class_name': "", 'instance_id': ""})
 
     def set_tokens(self, tokens):
         """
-        Sets the tokens based on the provided values.
+        Sets command tokens for deleting objects.
 
         Parameters:
-            tokens (list[str]): A list of token values.
-
+            tokens (list): A list of tokens representing the object to delete.
         """
-        self.__tokens.set_tokens(
-            dict(zip(("class_name", "instance_id"), tokens)))
+        for key, value in zip(self.__tokens, tokens):
+            self.__tokens[key] = value
 
     def reset_tokens(self):
-        """
-        Resets the tokens dictionary to default values.
-        """
-        self.__tokens.reset_tokens()
+        """Resets command tokens."""
+        self.__tokens['class_name'] = ""
+        self.__tokens['instance_id'] = ""
 
     def execute(self):
-        """
-        Executes the destroy command.
-        """
-        class_instance = self.get_class_instance(self.__tokens)
-        if not class_instance:
+        """Executes the destroy command."""
+        class_instance_pair = self.get_class_instance_pair(self.__tokens)
+        if not class_instance_pair:
             return
 
-        _class, instance = class_instance
-        self._storage.remove(_class.__name__, instance.id)
+        _, instance = class_instance_pair
+        instance.delete()
         self._storage.save()
 
 
 class AllCommand(AirBnBCommand):
     """
     AllCommand is a concrete subclass of AirBnBCommand for
-    displaying all objects or objects of a specific type.
+    retrieving all objects.
+
+    Methods:
+        __init__(storage): Initializes the AllCommand with a storage system.
+        set_tokens(tokens): Sets command tokens for retrieving objects.
+        reset_tokens(): Resets command tokens.
+        execute(): Executes the command to retrieve all objects.
     """
 
     def __init__(self, storage):
+        """
+        Initializes the AllCommand with a storage system.
+
+        Parameters:
+            storage: The storage system to interact with.
+        """
         super().__init__(storage)
-        self.__tokens = Tokens(class_name="")
+        self.__tokens = SealedDict({'class_name': ""})
 
     def set_tokens(self, tokens):
         """
-        Sets the tokens based on the provided values.
+        Sets command tokens for retrieving objects.
 
         Parameters:
-            tokens (list[str]): A list of token values.
-
+            tokens (list): A list of tokens representing
+            the object to retrieve.
         """
-        self.__tokens.set_tokens(dict(zip(("class_name", ), tokens)))
+        for key, value in zip(self.__tokens, tokens):
+            self.__tokens[key] = value
 
     def reset_tokens(self):
-        """
-        Resets the tokens dictionary to default values.
-        """
-        self.__tokens.reset_tokens()
+        """Resets command tokens."""
+        self.__tokens['class_name'] = ""
 
     def execute(self):
-        """
-        Executes the all command.
-        """
-        class_name = self.__tokens.class_name
+        """Executes the command to retrieve all objects."""
+        class_name = self.__tokens['class_name']
         if not class_name:
             print(self._storage.find_all())
             return
@@ -418,51 +383,57 @@ class AllCommand(AirBnBCommand):
 
 
 class AbstractUpdateCommand(AirBnBCommand, ABC):
-    """Abstract base class for update commands in the AirBnB application.
-
-    This abstract class defines the interface for update commands,
-    enforcing a common structure and behavior for updating
-    entities within the AirBnB system.
-
-    Subclasses must implement the `check_tokens`
-    method to validate the user input provided for update operations.
     """
+    AbstractUpdateCommand is an abstract class inheriting from
+    AirBnBCommand and ABC. It defines the structure of an update
+    command and specifies the check_tokens method.
+
+    Methods:
+        check_tokens(tokens): Abstract method to check if
+        the provided tokens are valid.
+    """
+
     @abstractmethod
     def check_tokens(self, tokens):
-        """Checks user input for an update command.
+        """
+        Check if the provided tokens are valid for the update command.
 
-        This abstract method enforces validation of tokens
-        (user input) required for specific update operations within
-        the AirBnB system. Each subclass implementing `AbstractUpdateCommand`
-        must define the logic for checking the validity and completeness of
-        tokens relevant to the specific update operation it represents.
-
-        Parameter:
-            tokens (dict): A dictionary containing user input for the update.
-            The specific keys and their expected values will vary depending on
-            the update operation.
+        Parameters:
+            tokens (list): List of tokens representing the update command.
 
         Returns:
-            bool: True if the tokens are valid and complete, False otherwise.
+            bool: True if the tokens are valid, False otherwise.
         """
         pass
 
 
 class UpdateCommand(AbstractUpdateCommand):
     """
-    UpdateCommand is a concrete subclass of AirBnBCommand for
-    updating attributes of an object.
+    UpdateCommand is a concrete subclass of AbstractUpdateCommand.
+    It coordinates different update strategies based on the provided tokens.
+
+    Methods:
+        check_tokens(tokens): Checks if the provided tokens are valid.
+        set_tokens(tokens): Sets the tokens for the update command.
+        reset_tokens(): Resets the tokens.
+        execute(): Executes the update command.
     """
 
     def __init__(self, storage):
+        """
+        Initializes the UpdateCommand with a storage system.
+
+        Parameters:
+            storage: The storage system to interact with.
+        """
         super().__init__(storage)
 
-        self.__update_commands = {
+        self.__update_commands = FrozenDict({
             "update_with_key_value_pair":
                 UpdateWithNameValuePairCommand(storage),
             "update_with_dict":
                 UpdateWithDictCommand(storage)
-        }
+        })
 
         default = self.__update_commands["update_with_key_value_pair"]
         self.__default_update_command = default
@@ -470,31 +441,23 @@ class UpdateCommand(AbstractUpdateCommand):
 
     def check_tokens(self, tokens):
         """
-        Checks if the provided command line arguments meet the expected format.
-        (Override Method)
+        Checks if the provided tokens are valid for the update command.
 
-        This method validates the number of tokens and the type
-        of the third token (assuming a specific format for certain commands).
-        It returns True if the tokens adhere to the expected format,
-        False otherwise.
-
-         Parameters:
-            tokens (dict[str, any]): A list of tokens parsed from the
-            command line input.
+        Parameters:
+            tokens (list): List of tokens representing the update command.
 
         Returns:
-            bool: True if the tokens meet the expected format, False otherwise.
+            bool: True if the tokens are valid, False otherwise.
         """
         return False
 
     def set_tokens(self, tokens):
         """
-        Sets the tokens based on the provided values.
+        Sets the tokens for the update command.
 
         Parameters:
-            tokens (list): A list of token values.
+            tokens (list): List of tokens representing the update command.
         """
-
         for update_command in self.__update_commands.values():
             if update_command.check_tokens(tokens):
                 self.__current_update_command = update_command
@@ -506,9 +469,7 @@ class UpdateCommand(AbstractUpdateCommand):
             self.__default_update_command.set_tokens(tokens)
 
     def reset_tokens(self):
-        """
-        Resets the tokens dictionary to default values.
-        """
+        """Resets the tokens."""
         if not self.__current_update_command:
             self.__default_update_command.reset_tokens()
             return
@@ -517,9 +478,7 @@ class UpdateCommand(AbstractUpdateCommand):
         self.__current_update_command = None
 
     def execute(self):
-        """
-        Executes the update command.
-        """
+        """Executes the update command."""
         if not self.__current_update_command:
             self.__default_update_command.execute()
             return
@@ -529,64 +488,66 @@ class UpdateCommand(AbstractUpdateCommand):
 
 class UpdateWithNameValuePairCommand(AbstractUpdateCommand):
     """
-    UpdateCommand is a concrete subclass of AirBnBCommand for
-    updating attributes of an object with one key value pair.
+    UpdateWithNameValuePairCommand is a concrete subclass of
+    AbstractUpdateCommand. It updates an object's attribute
+    with a new value based on the provided tokens.
+
+    Methods:
+        check_tokens(tokens): Checks if the provided tokens are valid.
+        set_tokens(tokens): Sets the tokens for the update command.
+        reset_tokens(): Resets the tokens.
+        execute(): Executes the update command.
     """
 
     def __init__(self, storage):
+        """
+        Initializes the UpdateWithNameValuePairCommand with a storage system.
+
+        Parameters:
+            storage: The storage system to interact with.
+        """
         super().__init__(storage)
 
-        self.__tokens = Tokens(
-            class_name="",
-            instance_id="",
-            attribute_name="",
-            attribute_value="",
-        )
+        self.__tokens = SealedDict({
+            'class_name': "",
+            'instance_id': "",
+            'attribute_name': "",
+            'attribute_value': "",
+        })
 
     def check_tokens(self, tokens):
         """
-        Checks if the provided command line arguments meet the expected format.
-
-        This method validates the number of tokens and the type
-        of the third token (assuming a specific format for certain commands).
-        It returns True if the tokens adhere to the expected format,
-        False otherwise.
+        Checks if the provided tokens are valid for the update command.
 
         Parameters:
-            tokens (list[any]): A list of tokens parsed from the
-            command line input.
+            tokens (list): List of tokens representing the update command.
 
         Returns:
-            bool: True if the tokens meet the expected format, False otherwise.
+            bool: True if the tokens are valid, False otherwise.
         """
         return len(tokens) >= 4 and type(tokens[2]) is str
 
     def set_tokens(self, tokens):
         """
-        Sets the tokens based on the provided values.
+        Sets the tokens for the update command.
 
         Parameters:
-            tokens (list[str]): A list of token values.
-
+            tokens (list): List of tokens representing the update command.
         """
-        self.__tokens.set_tokens(dict(zip(("class_name",
-                                           "instance_id",
-                                           "attribute_name",
-                                           "attribute_value"
-                                           ), tokens)))
+        for key, value in zip(self.__tokens, tokens):
+            self.__tokens[key] = value
 
     def reset_tokens(self):
-        """
-        Resets the tokens dictionary to default values.
-        """
-        self.__tokens.reset_tokens()
+        """Resets the tokens."""
+        self.__tokens['class_name'] = ""
+        self.__tokens['instance_id'] = ""
+        self.__tokens['attribute_name'] = ""
+        self.__tokens['attribute_value'] = ""
 
     def execute(self):
-        """
-        Executes the update command.
-        """
-        class_instance = self.get_class_instance(self.__tokens)
-        if not class_instance:
+        """Executes the update command."""
+        class_instance_pair = self.get_class_instance_pair(self.__tokens)
+        if not class_instance_pair:
             return
 
         attribute_name_value_pair = self.get_attribute_name_value_pair(
@@ -595,120 +556,123 @@ class UpdateWithNameValuePairCommand(AbstractUpdateCommand):
         if not attribute_name_value_pair:
             return
 
-        name = attribute_name_value_pair["attribute_name"]
-        value = attribute_name_value_pair["attribute_value"]
+        name, value = attribute_name_value_pair
 
-        if name in ["id", "created_at", "updated_at"]:
-            return
+        _, instance = class_instance_pair
 
-        _class, instance = class_instance
-        self._storage.update(_class.__name__, instance.id, **{name: value})
+        instance.update(**{name: value})
         self._storage.save()
 
 
 class UpdateWithDictCommand(AbstractUpdateCommand):
     """
-    UpdateCommand is a concrete subclass of AirBnBCommand for
-    updating attributes of an object with dictionary.
+    UpdateWithDictCommand is a concrete subclass of AbstractUpdateCommand.
+    It updates an object's attributes with values from a dictionary
+    based on the provided tokens.
+
+    Methods:
+        check_tokens(tokens): Checks if the provided tokens are valid.
+        set_tokens(tokens): Sets the tokens for the update command.
+        reset_tokens(): Resets the tokens.
+        execute(): Executes the update command.
     """
 
     def __init__(self, storage):
+        """
+        Initializes the UpdateWithDictCommand with a storage system.
+
+        Parameters:
+            storage: The storage system to interact with.
+        """
         super().__init__(storage)
 
-        self.__tokens = Tokens(
-            class_name="",
-            instance_id="",
-            dictionary={}
-        )
+        self.__tokens = SealedDict({
+            'class_name': "",
+            'instance_id': "",
+            'dictionary': {}
+        })
 
     def check_tokens(self, tokens):
         """
-        Checks if the provided command line arguments meet the expected format.
+        Checks if the provided tokens are valid for the update command.
 
-        This method validates the number of tokens and the type
-        of the third token (assuming a specific format for certain commands).
-        It returns True if the tokens adhere to the expected format,
-        False otherwise.
-
-         Parameters:
-            tokens (list[any]): A list of tokens parsed from the
-            command line input.
+        Parameters:
+            tokens (list): List of tokens representing the update command.
 
         Returns:
-            bool: True if the tokens meet the expected format, False otherwise.
+            bool: True if the tokens are valid, False otherwise.
         """
         return len(tokens) >= 3 and type(tokens[2]) is dict
 
     def set_tokens(self, tokens):
         """
-        Sets the tokens based on the provided values.
+        Sets the tokens for the update command.
 
         Parameters:
-            tokens (list[str]): A list of token values.
-
+            tokens (list): List of tokens representing the update command.
         """
-        self.__tokens.set_tokens(dict(zip(("class_name",
-                                           "instance_id",
-                                           "dictionary",
-                                           ), tokens)))
+        for key, value in zip(self.__tokens, tokens):
+            self.__tokens[key] = value
 
     def reset_tokens(self):
-        """
-        Resets the tokens dictionary to default values.
-        """
-        self.__tokens.reset_tokens()
+        """Resets the tokens."""
+        self.__tokens['class_name'] = ""
+        self.__tokens['instance_id'] = ""
+        self.__tokens['dictionary'] = {}
 
     def execute(self):
-        """
-        Executes the update command.
-        """
-        class_instance = self.get_class_instance(self.__tokens)
-        if not class_instance:
+        """Executes the update command."""
+        class_instance_pair = self.get_class_instance_pair(self.__tokens)
+        if not class_instance_pair:
             return
 
-        dictionary = self.__tokens.dictionary
+        dictionary = self.__tokens['dictionary']
         if not dictionary:
             return
 
-        for attr in ["id", "created_at", "updated_at"]:
-            dictionary.pop(attr, None)
+        _, instance = class_instance_pair
 
-        _class, instance = class_instance
-        self._storage.update(
-            _class.__name__, instance.id, **dictionary)
+        instance.update(**dictionary)
         self._storage.save()
 
 
 class CountCommand(AirBnBCommand):
     """
-    CountCommand is a concrete subclass of AirBnBCommand for
-    counting the number of class Object in storage.
+    CountCommand is a concrete subclass of AirBnBCommand for counting
+    the number of class objects in storage.
+
+    Methods:
+        set_tokens(tokens): Sets the tokens for the command.
+        reset_tokens(): Resets the tokens.
+        execute(): Executes the command.
     """
 
     def __init__(self, storage):
+        """
+        Initializes the CountCommand with a storage system.
+
+        Parameters:
+            storage(Storage): The storage system to interact with.
+        """
         super().__init__(storage)
-        self.__tokens = Tokens(class_name="")
+        self.__tokens = SealedDict({'class_name': ""})
 
     def set_tokens(self, tokens):
         """
-        Sets the tokens based on the provided values.
+        Sets the tokens for the command.
 
         Parameters:
-            tokens (list[str]): A list of token values.
-
+            tokens (list): List of tokens representing the command.
         """
-        self.__tokens.set_tokens(dict(zip(("class_name", ), tokens)))
+        for key, value in zip(self.__tokens, tokens):
+            self.__tokens[key] = value
 
     def reset_tokens(self):
-        """
-        Resets the tokens dictionary to default values.
-        """
-        self.__tokens.reset_tokens()
+        """Resets the tokens."""
+        self.__tokens['class_name'] = ""
 
     def execute(self):
-        """
-        Executes the update command.
-        """
+        """Executes the command."""
         _class = self.get_class(self.__tokens)
         if not _class:
             return

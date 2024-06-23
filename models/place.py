@@ -12,24 +12,11 @@ from models.base_model import BaseModel, Base
 from models.review import Review
 from models.amenity import Amenity
 
-place_amenity = Table(
-    'place_amenity',
-    Base.metadata,
-    Column(
-        'place_id', String(60),
-        ForeignKey('places.id'),
-        primary_key=True
-    ),
-    Column(
-        'amenity_id', String(60),
-        ForeignKey('amenities.id'),
-        primary_key=True
-    )
-)
+STORAGE_TYPE = os.getenv('HBNB_TYPE_STORAGE')
 
 parent_classes = (
     BaseModel,
-    Base if os.getenv('HBNB_TYPE_STORAGE') == "db" else object
+    Base if STORAGE_TYPE == "db" else object
 )
 
 
@@ -37,7 +24,7 @@ class Place(*parent_classes):
     """
     Place class represents a lodging place.
     """
-    if os.getenv('HBNB_TYPE_STORAGE') == "db":
+    if STORAGE_TYPE == "db":
         __tablename__ = 'places'
 
         city_id = Column(String(60),
@@ -55,7 +42,7 @@ class Place(*parent_classes):
         latitude = Column(Float)
         longitude = Column(Float)
         user = relationship('User', back_populates='places')
-        cities = relationship('City', back_populates='places')
+        city = relationship('City', back_populates='places')
         reviews = relationship('Review', back_populates='place',
                                passive_deletes=True)
         amenities = relationship('Amenity', secondary='place_amenity',
@@ -128,3 +115,20 @@ class Place(*parent_classes):
 
             if obj.id not in self.amenity_ids:
                 self.amenity_ids.append(obj.id)
+
+
+if STORAGE_TYPE == "db":
+    place_amenity = Table(
+        'place_amenity',
+        Base.metadata,
+        Column(
+            'place_id', String(60),
+            ForeignKey('places.id'),
+            primary_key=True
+        ),
+        Column(
+            'amenity_id', String(60),
+            ForeignKey('amenities.id'),
+            primary_key=True
+        )
+    )

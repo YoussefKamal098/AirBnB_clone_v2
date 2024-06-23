@@ -9,9 +9,9 @@ from models.city import City
 from models.amenity import Amenity
 from models.place import Place
 from models.review import Review
-from models.immutable_dict import ImmutableDict
+from models.dict_wrapper import FrozenDict
 
-CLASSES = ImmutableDict({
+CLASSES = FrozenDict({
     "User": User,
     "State": State,
     "City": City,

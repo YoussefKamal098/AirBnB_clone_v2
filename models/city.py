@@ -10,9 +10,11 @@ from sqlalchemy.orm import relationship
 
 from models.base_model import BaseModel, Base
 
+STORAGE_TYPE = os.getenv('HBNB_TYPE_STORAGE')
+
 parent_classes = (
     BaseModel,
-    Base if os.getenv('HBNB_TYPE_STORAGE') == "db" else object
+    Base if STORAGE_TYPE == "db" else object
 )
 
 
@@ -21,7 +23,7 @@ class City(*parent_classes):
     City class represents a city within a geographic location.
     """
 
-    if os.getenv('HBNB_TYPE_STORAGE') == "db":
+    if STORAGE_TYPE == "db":
         __tablename__ = 'cities'
 
         name = Column(String(128), nullable=False, index=True)
@@ -29,7 +31,7 @@ class City(*parent_classes):
                           ForeignKey('states.id', ondelete="CASCADE"),
                           nullable=False)
         state = relationship("State", back_populates="cities")
-        places = relationship('Place', back_populates='cities',
+        places = relationship('Place', back_populates='city',
                               passive_deletes=True)
 
         __table_args__ = (
