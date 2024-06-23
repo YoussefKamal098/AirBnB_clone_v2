@@ -95,7 +95,7 @@ class FileStorage(Storage):
         if not obj or type(obj) not in self.get_classes():
             return
 
-        key = self._get_obj_key(obj.__class__.__name_, obj.id)
+        key = self._get_obj_key(obj.__class__.__name__, obj.id)
         self.__objects.pop(key, None)
 
     def find(self, class_name, _id):
