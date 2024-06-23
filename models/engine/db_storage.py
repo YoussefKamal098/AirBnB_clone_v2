@@ -49,11 +49,20 @@ class DBStorage(Storage):
                              f"variables for database connection: "
                              f"{', '.join(missing_vars)}")
 
-        self.__engine = create_engine(
-            f"mysql+mysqldb://{user}:{pwd}@{host}/{db}", pool_pre_ping=True)
+        self._connect(user, pwd, host, db)
 
         if hbnb_env == 'test':
             Base.metadata.drop_all(self.__engine)
+
+    @classmethod
+    def _connect(cls, user, pwd, host, db, pool_pre_ping=True):
+        """
+        Creates a database engine connection using SQLAlchemy.
+        """
+        cls.__engine = create_engine(
+            f"mysql+mysqldb://{user}:{pwd}@{host}/{db}",
+            pool_pre_ping=pool_pre_ping
+        )
 
     def all(self, cls=None):
         """
@@ -138,7 +147,7 @@ class DBStorage(Storage):
             expire_on_commit=False
         )
 
-        self.__session = scoped_session(session_factory)
+        DBStorage.__session = scoped_session(session_factory)
 
     def find(self, class_name, _id):
         """

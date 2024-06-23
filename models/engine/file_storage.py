@@ -72,7 +72,7 @@ class FileStorage(Storage):
             with open(self.__file_path, "r") as file:
                 deserialized_objects = json.load(file)
 
-                self.__objects = {
+                FileStorage.__objects = {
                     key: self._deserialize(dictionary)
                     for key, dictionary in deserialized_objects.items()
                 }
