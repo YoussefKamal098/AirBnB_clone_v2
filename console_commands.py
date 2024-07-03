@@ -155,7 +155,7 @@ class AirBnBCommand(ABC):
 
         return _class
 
-    def get_class_instance_pair(self, tokens):
+    def get_instance(self, tokens):
         """
         Method to retrieve the class and instance based on class name
         and instance ID from command tokens.
@@ -164,7 +164,7 @@ class AirBnBCommand(ABC):
             tokens (SealedDict): Dictionary containing command tokens.
 
         Returns:
-            tuple: A tuple containing the class and instance corresponding
+            (BaseModel): An instance corresponding
                     to the class name and instance ID extracted from the
                     tokens, or None if either the class or instance is
                     not found.
@@ -182,7 +182,7 @@ class AirBnBCommand(ABC):
             print("** no instance found **")
             return None
 
-        return _class, instance
+        return instance
 
 
 class CreateCommand(AirBnBCommand):
@@ -274,11 +274,10 @@ class ShowCommand(AirBnBCommand):
 
     def execute(self):
         """Executes the show command."""
-        class_instance_pair = self.get_class_instance_pair(self.__tokens)
-        if not class_instance_pair:
+        instance = self.get_instance(self.__tokens)
+        if not instance:
             return
 
-        _, instance = class_instance_pair
         print(instance)
 
 
@@ -322,11 +321,10 @@ class DestroyCommand(AirBnBCommand):
 
     def execute(self):
         """Executes the destroy command."""
-        class_instance_pair = self.get_class_instance_pair(self.__tokens)
-        if not class_instance_pair:
+        instance = self.get_instance(self.__tokens)
+        if not instance:
             return
 
-        _, instance = class_instance_pair
         instance.delete()
         self._storage.save()
 
@@ -546,8 +544,8 @@ class UpdateWithNameValuePairCommand(AbstractUpdateCommand):
 
     def execute(self):
         """Executes the update command."""
-        class_instance_pair = self.get_class_instance_pair(self.__tokens)
-        if not class_instance_pair:
+        instance = self.get_instance(self.__tokens)
+        if not instance:
             return
 
         attribute_name_value_pair = self.get_attribute_name_value_pair(
@@ -557,8 +555,6 @@ class UpdateWithNameValuePairCommand(AbstractUpdateCommand):
             return
 
         name, value = attribute_name_value_pair
-
-        _, instance = class_instance_pair
 
         instance.update(**{name: value})
         self._storage.save()
@@ -622,15 +618,13 @@ class UpdateWithDictCommand(AbstractUpdateCommand):
 
     def execute(self):
         """Executes the update command."""
-        class_instance_pair = self.get_class_instance_pair(self.__tokens)
-        if not class_instance_pair:
+        instance = self.get_instance(self.__tokens)
+        if not instance:
             return
 
         dictionary = self.__tokens['dictionary']
         if not dictionary:
             return
-
-        _, instance = class_instance_pair
 
         instance.update(**dictionary)
         self._storage.save()
