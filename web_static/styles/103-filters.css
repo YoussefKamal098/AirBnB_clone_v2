@@ -10,6 +10,7 @@
     border: 1px solid #dddddd;
     border-radius: 4px;
     display: inline-block;
+    font-size: 0;
 }
 
 .filters:before,
@@ -202,6 +203,10 @@
         border: 0;
         border-bottom: 1px solid #dddddd;
         border-top: 1px solid #dddddd;
+    }
+
+    .filters .locations{
+        margin-bottom: 5px;
     }
 
     .filters .locations .popover,
