@@ -1,11 +1,5 @@
 #!/usr/bin/python3
-"""Defines unittests for models/place.py.
-
-Unittest classes:
-    TestPlaceInstantiation
-    TestPlaceSave
-    TestPlaceToDict
-"""
+"""Defines unittests for models/place.py"""
 import unittest
 
 

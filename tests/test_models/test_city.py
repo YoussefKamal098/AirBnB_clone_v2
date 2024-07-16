@@ -1,11 +1,5 @@
 #!/usr/bin/python3
-"""Defines unittests for models/city.py.
-
-Unittest classes:
-    TestCityInstantiation
-    TestCitySave
-    TestCityToDict
-"""
+"""Defines unittests for models/city.py"""
 import unittest
 
 
