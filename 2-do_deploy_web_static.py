@@ -32,7 +32,9 @@ Usage:
 
 Note:
 Replace '/path/to/archive.tgz' with the actual path to the archive
-created in step 1.
+    created in step 1.
+Replace '<username-on-remote-server>' with your remote server username.
+Replace '<path-to-public-key>' with the path to your SSH public key.
 """
 
 import os
@@ -55,6 +57,11 @@ def do_pack():
     Returns:
     - If successful, returns the path to the created archive.
     - If an error occurs during the process, returns None.
+
+    This function performs the following steps:
+        1. Generates a timestamp to include in the archive name.
+        2. Creates the 'versions' directory if it doesn't exist.
+        3. Creates a compressed archive of the 'web_static' directory.
     """
     try:
         # Generate timestamp
@@ -67,6 +74,9 @@ def do_pack():
 
         # Create the compressed archive
         local(f"tar -cvzf {archive_path} web_static")
+
+        archive_size = os.stat(archive_path).st_size
+        print(f"web_static packed: {archive_path} -> {archive_size} Bytes")
 
         return archive_path
 
@@ -86,6 +96,15 @@ def do_deploy(archive_path):
     Returns:
     - True if the archive was successfully distributed.
     - False if the archive was not distributed.
+
+    This function performs the following steps:
+        1. Checks if the archive path exists.
+        2. Extracts the archive file name and base name.
+        3. Ensures the target directory on the remote server is clean.
+        4. Uploads the archive to the remote server.
+        5. Uncompresses the archive into the target directory.
+        6. Cleans up temporary files and directories.
+        7. Updates the symbolic link to point to the new release.
     """
     if not os.path.exists(archive_path):
         print(f"Archive path {archive_path} does not exist.")

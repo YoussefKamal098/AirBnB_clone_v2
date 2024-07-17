@@ -31,17 +31,11 @@ Dependencies:
     $ pip3 install Fabric3==1.14.post1
 
 Usage:
-1. Create the Archive:
-   fab -f ./path/to/fabfile do_pack
-
-2. Deploy the Created Archive:
-   fab -f ./path/to/fabfile do_deploy:/path/to/archive.tgz \
+    fab -f ./path/to/fabfile deploy \
    -u <username-on-remote-server> \
    -i <path-to-public-key>
 
 Note:
-Replace '/path/to/archive.tgz' with the actual path to the archive
-    created in step 1.
 Replace '<username-on-remote-server>' with your remote server username.
 Replace '<path-to-public-key>' with the path to your SSH public key.
 """
@@ -84,6 +78,9 @@ def do_pack():
         # Create the compressed archive
         local(f"tar -cvzf {archive_path} web_static")
 
+        archive_size = os.stat(archive_path).st_size
+        print(f"web_static packed: {archive_path} -> {archive_size} Bytes")
+
         return archive_path
 
     except Exception as e:
@@ -100,6 +97,7 @@ def do_deploy(archive_path):
     - archive_path: Path to the archive to distribute.
 
     Returns:
+
     - True if the archive was successfully distributed.
     - False if the archive was not distributed.
 

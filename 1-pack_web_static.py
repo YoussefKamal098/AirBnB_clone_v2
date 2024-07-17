@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 """
 Script to package the web_static directory into a compressed archive.
 
@@ -8,12 +7,25 @@ archive of the web_static directory inside a 'versions' directory.
 
 Dependencies:
 - Fabric (Install using: pip install fabric)
+    $ pip3 uninstall Fabric
+    $ sudo apt-get install libffi-dev
+    $ sudo apt-get install libssl-dev
+    $ sudo apt-get install build-essential
+    $ sudo apt-get install python3.4-dev or python3.7-dev
+    $ sudo apt-get install libpython3-dev
+    $ pip3 install pyparsing
+    $ pip3 install appdirs
+    $ pip3 install setuptools==40.1.0
+    $ pip3 install cryptography==2.8
+    $ pip3 install bcrypt==3.1.7
+    $ pip3 install PyNaCl==1.3.0
+    $ pip3 install Fabric3==1.14.post1
 
 Usage:
-Run this script to create a compressed archive of the web_static directory.
-The archive will be saved in the 'versions' directory with a timestamped name.
+    fab -f ./path/to/fabfile do_pack
 """
 
+import os
 from datetime import datetime
 
 from fabric.api import local, task
@@ -27,6 +39,11 @@ def do_pack():
     Returns:
     - If successful, returns the path to the created archive.
     - If an error occurs during the process, returns None.
+
+    This function performs the following steps:
+        1. Generates a timestamp to include in the archive name.
+        2. Creates the 'versions' directory if it doesn't exist.
+        3. Creates a compressed archive of the 'web_static' directory.
     """
     try:
         # Generate timestamp
@@ -39,6 +56,9 @@ def do_pack():
 
         # Create the compressed archive
         local(f"tar -cvzf {archive_path} web_static")
+
+        archive_size = os.stat(archive_path).st_size
+        print(f"web_static packed: {archive_path} -> {archive_size} Bytes")
 
         return archive_path
 
