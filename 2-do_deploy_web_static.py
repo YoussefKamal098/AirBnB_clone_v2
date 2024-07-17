@@ -8,11 +8,11 @@ directory and distribute it to specified web servers.
 Dependencies:
 - Fabric (Install using: pip install fabric )
     $ pip3 uninstall Fabric
-    $ sudo apt-get install libffi-dev
-    $ sudo apt-get install libssl-dev
-    $ sudo apt-get install build-essential
-    $ sudo apt-get install python3.4-dev or 3.7-dev
-    $ sudo apt-get install libpython3-dev
+    $ run apsudo t-get install libffi-dev
+    $ run apsudo t-get install libssl-dev
+    $ run apsudo t-get install build-essential
+    $ run apsudo t-get install python3.4-dev or 3.7-dev
+    $ run apsudo t-get install libpython3-dev
     $ pip3 install pyparsing
     $ pip3 install appdirs
     $ pip3 install setuptools==40.1.0
@@ -38,7 +38,7 @@ created in step 1.
 import os
 from datetime import datetime
 
-from fabric.api import task, local, sudo, put, env
+from fabric.api import task, local, run, put, env
 
 env.hosts = ["web-01.realyousam.tech", "web-02.realyousam.tech"]
 env.user = "ubuntu"  # replace with your username of the remote server
@@ -99,25 +99,25 @@ def do_deploy(archive_path):
         release_dir = f"/data/web_static/releases/{archive_base_name}/"
 
         # Ensure the target directory is clean
-        sudo(f"rm -rf {release_dir}")
-        sudo(f"mkdir -p {release_dir}")
+        run(f"sudo rm -rf {release_dir}")
+        run(f"sudo mkdir -p {release_dir}")
 
         # Upload the archive to the remote server
         put(archive_path, remote_tmp_path)
 
         # Uncompress the archive into the target directory
-        sudo(f"tar -xzf {remote_tmp_path} -C {release_dir}")
+        run(f"tar -xzf {remote_tmp_path} -C {release_dir}")
 
         # Clean up the temporary archive file
-        sudo(f"rm {remote_tmp_path}")
+        run(f"sudo rm {remote_tmp_path}")
 
         # Move contents out of the nested web_static directory
-        sudo(f"mv {release_dir}/web_static/* {release_dir}")
-        sudo(f"rm -rf {release_dir}/web_static")
+        run(f"sudo mv {release_dir}/web_static/* {release_dir}")
+        run(f"sudo rm -rf {release_dir}/web_static")
 
         # Update the symbolic link to point to the new release
-        sudo("rm -rf /data/web_static/current")
-        sudo(f"ln -s {release_dir} /data/web_static/current")
+        run("sudo rm -rf /data/web_static/current")
+        run(f"sudo ln -s {release_dir} /data/web_static/current")
 
         print("New version deployed!")
         return True
