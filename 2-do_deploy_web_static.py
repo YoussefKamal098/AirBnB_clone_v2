@@ -106,7 +106,7 @@ def do_deploy(archive_path):
         put(archive_path, remote_tmp_path)
 
         # Uncompress the archive into the target directory
-        run(f"tar -xzf {remote_tmp_path} -C {release_dir}")
+        run(f"sudo tar -xzf {remote_tmp_path} -C {release_dir}")
 
         # Clean up the temporary archive file
         run(f"sudo rm {remote_tmp_path}")
