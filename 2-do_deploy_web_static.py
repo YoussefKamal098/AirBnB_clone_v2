@@ -1,4 +1,4 @@
-#!usr/bin/python3
+#!/usr/bin/python3
 """
 Script to distribute an archive to web servers.
 """
@@ -57,7 +57,7 @@ def do_deploy(archive_path):
     """
 
     if not os.path.exists(archive_path):
-        # print(f"Archive path {archive_path} does not exist.")
+        print(f"Archive path {archive_path} does not exist.")
         return False
 
     try:
@@ -82,5 +82,5 @@ def do_deploy(archive_path):
         print("New version deployed!")
         return True
     except Exception as e:
-        # print(f"An error occurred during deployment: {e}")
+        print(f"An error occurred during deployment: {e}")
         return False
