@@ -43,6 +43,5 @@ def do_pack():
         return archive_path
 
     except Exception as e:
-        # print(f"An error occurred: {e}")
-
+        print(f"An error occurred: {e}")
         return None
