@@ -34,33 +34,94 @@ Note:
 Replace '/path/to/archive.tgz' with the actual path to the archive
 created in step 1.
 """
-import os
 
-from fabric.api import run, put, env
+import os
+from datetime import datetime
+
+from fabric.api import task, local, run, put, env
 
 env.hosts = ["web-01.realyousam.tech", "web-02.realyousam.tech"]
 
 
-# env.user = "ubuntu"  # replace with your username of the remote server
+# env.user = "username"  # replace with your username of the remote server
 # env.key_filename = "/path/to/public/key eg. ~/.ssh/id_rsa"
 
 
-def do_deploy(archive_path):
-    """distributes an archive to the web servers"""
-    if os.path.exists(archive_path) is False:
-        return False
+@task
+def do_pack():
+    """
+    Creates a compressed archive of the web_static directory.
+
+    Returns:
+    - If successful, returns the path to the created archive.
+    - If an error occurs during the process, returns None.
+    """
     try:
-        file_n = archive_path.split("/")[-1]
-        no_ext = file_n.split(".")[0]
-        path = "/data/web_static/releases/"
-        put(archive_path, '/tmp/')
-        run('mkdir -p {}{}/'.format(path, no_ext))
-        run('tar -xzf /tmp/{} -C {}{}/'.format(file_n, path, no_ext))
-        run('rm /tmp/{}'.format(file_n))
-        run('mv {0}{1}/web_static/* {0}{1}/'.format(path, no_ext))
-        run('rm -rf {}{}/web_static'.format(path, no_ext))
-        run('rm -rf /data/web_static/current')
-        run('ln -s {}{}/ /data/web_static/current'.format(path, no_ext))
+        # Generate timestamp
+        now = datetime.now().strftime("%Y%m%d%H%M%S")
+        archive_name = f"web_static_{now}.tgz"
+        archive_path = f"versions/{archive_name}"
+
+        # Create 'versions' directory if it doesn't exist
+        local("mkdir -p versions")
+
+        # Create the compressed archive
+        local(f"tar -cvzf {archive_path} web_static")
+
+        return archive_path
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
+@task
+def do_deploy(archive_path):
+    """
+    Distributes an archive to the web servers.
+
+    Args:
+    - archive_path: Path to the archive to distribute.
+
+    Returns:
+    - True if the archive was successfully distributed.
+    - False if the archive was not distributed.
+    """
+    if not os.path.exists(archive_path):
+        print(f"Archive path {archive_path} does not exist.")
+        return False
+
+    try:
+        # Extract the archive file name and name without extension
+        archive_file = os.path.basename(archive_path)
+        archive_base_name = os.path.splitext(archive_file)[0]
+        remote_tmp_path = f"/tmp/{archive_file}"
+        release_dir = f"/data/web_static/releases/{archive_base_name}/"
+
+        # Ensure the target directory is clean
+        run(f"sudo rm -rf {release_dir}")
+        run(f"sudo mkdir -p {release_dir}")
+
+        # Upload the archive to the remote server
+        put(archive_path, remote_tmp_path)
+
+        # Uncompress the archive into the target directory
+        run(f"sudo tar -xzf {remote_tmp_path} -C {release_dir}")
+
+        # Clean up the temporary archive file
+        run(f"sudo rm {remote_tmp_path}")
+
+        # Move contents out of the nested web_static directory
+        run(f"sudo mv {release_dir}/web_static/* {release_dir}")
+        run(f"sudo rm -rf {release_dir}/web_static")
+
+        # Update the symbolic link to point to the new release
+        run("sudo rm -rf /data/web_static/current")
+        run(f"sudo ln -s {release_dir} /data/web_static/current")
+
+        print("New version deployed!")
         return True
-    except:
+
+    except Exception as error:
+        print(f"An error occurred during deployment: {error}")
         return False
