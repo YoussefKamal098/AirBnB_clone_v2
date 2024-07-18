@@ -1,93 +1,63 @@
-# Update the package list and install Nginx
-package { 'nginx':
+# Setup the web servers for the deployment of web_static
+exec { '/usr/bin/env apt -y update': }
+-> package { 'nginx':
   ensure => installed,
-  before => Service['nginx'],
 }
-
-# Ensure the necessary directories are present
-file { '/data/web_static/releases/test':
-  ensure => directory,
-  owner  => 'ubuntu',
-  group  => 'ubuntu',
-  mode   => '0755',
-  before => File['/data/web_static/shared'],
+-> file { '/data':
+  ensure => 'directory'
 }
-
-file { '/data/web_static/shared':
-  ensure => directory,
-  owner  => 'ubuntu',
-  group  => 'ubuntu',
-  mode   => '0755',
+-> file { '/data/web_static':
+  ensure => 'directory'
 }
-
-# Create the symbolic link
-file { '/data/web_static/current':
-  ensure => link,
-  target => '/data/web_static/releases/test',
-  owner  => 'ubuntu',
-  group  => 'ubuntu',
+-> file { '/data/web_static/releases':
+  ensure => 'directory'
 }
-
-# Create the test HTML file
-file { '/data/web_static/releases/test/index.html':
-  ensure  => file,
-  content => '
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Nginx Test Page</title>
-    </head>
-    <body>
-      <h1>Congratulations! Your Nginx server is working!</h1>
-    </body>
-    </html>
-',
-  owner   => 'ubuntu',
-  group   => 'ubuntu',
-  mode    => '0644',
+-> file { '/data/web_static/releases/test':
+  ensure => 'directory'
 }
-
-# Ensure the ownership of the /data directory
-file { '/data':
-  ensure  => directory,
-  owner   => 'ubuntu',
-  group   => 'ubuntu',
-  recurse => true,
+-> file { '/data/web_static/shared':
+  ensure => 'directory'
 }
-
-# # Update the Nginx configuration to serve the web static content
-# file { '/etc/nginx/sites-available/default':
-#   ensure  => file,
-#   mode    => '0644',
-#   content => template('nginx/default.erb'),
-#   notify  => Service['nginx'],
-# }
-
-# Update the Nginx configuration to serve the web static content using sed command
-exec { 'update_nginx_config':
-  command =>
-    'sudo sed -i \'s/^server\s*{\s*$/server {\n\tlocation \/hbnb_static {\n\t\talias \/data\/web_static\/current;\n\t}/\' /etc/nginx/sites-available/default'
-  ,
-  onlyif  => 'test ! $(grep -q "location /hbnb_static" /etc/nginx/sites-available/default)',
-  notify  => Service['nginx'],
+-> file { '/data/web_static/releases/test/index.html':
+  ensure  => 'present',
+  content => "<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body>
+    <p>Nginx server test</p>
+  </body>
+</html>"
 }
-
-# Ensure the Nginx service is running
-service { 'nginx':
+-> file { '/data/web_static/current':
+  ensure => 'link',
+  target => '/data/web_static/releases/test'
+}
+-> exec { 'chown -R ubuntu:ubuntu /data/':
+  path => '/usr/bin/:/usr/local/bin/:/bin/'
+}
+-> file { '/var/www':
+  ensure => 'directory'
+}
+-> file { '/var/www/html':
+  ensure => 'directory'
+}
+-> file { '/var/www/html/index.html':
+  ensure  => 'present',
+  content => "<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body>
+    <p>Nginx server test</p>
+  </body>
+</html>"
+}
+exec { 'nginx_conf':
+  environment => ['data=\ \tlocation /hbnb_static {\n\t\talias /data/web_static/current;\n\t}\n'],
+  command     => 'sed -i "39i $data" /etc/nginx/sites-enabled/default',
+  path        => '/usr/bin:/usr/sbin:/bin:/usr/local/bin'
+}
+-> service { 'nginx':
   ensure => running,
-  enable => true,
 }
-
-# Template for the Nginx configuration
-# Create a file named 'default.erb' in a templates directory in your module
-# with the following content:
-#
-# server {
-#   location /hbnb_static {
-#     alias /data/web_static/current;
-#   }
-#   ...
-# }
-#
-# Make sure to include other necessary server configuration in the template.
