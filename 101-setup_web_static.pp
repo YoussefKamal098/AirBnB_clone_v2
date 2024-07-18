@@ -84,12 +84,13 @@ file { '/var/www/html/index.html':
 
 # Update Nginx configuration
 exec { 'nginx_conf':
-  command =>
-    'sudo sed -i \'s/^server\s*{\s*$/server {\n\tlocation \/hbnb_static {\n\t\talias \/data\/web_static\/current;\n\t}/\' /etc/nginx/sites-enabled/default'
+  environment => 'nginx_location_config=\n\tlocation \/hbnb_static {\n\t\talias \/data\/web_static\/current;\n\t',
+  command     =>
+    'sudo sed -i \'s/^server\s*{\s*$/server {$nginx_location_config}/\' /etc/nginx/sites-enabled/default'
   ,
-  path    => '/usr/bin:/usr/sbin:/bin:/usr/local/bin',
-  require => Package['nginx'],
-  notify  => Service['nginx'],
+  path        => '/usr/bin:/usr/sbin:/bin:/usr/local/bin',
+  require     => Package['nginx'],
+  notify      => Service['nginx'],
 }
 
 # Ensure Nginx service is running and enabled
