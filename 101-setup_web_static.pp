@@ -32,16 +32,16 @@ file { '/data/web_static/current':
 file { '/data/web_static/releases/test/index.html':
   ensure  => file,
   content => '
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Nginx Test Page</title>
-</head>
-<body>
-  <h1>Congratulations! Your Nginx server is working!</h1>
-</body>
-</html>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Nginx Test Page</title>
+    </head>
+    <body>
+      <h1>Congratulations! Your Nginx server is working!</h1>
+    </body>
+    </html>
 ',
   owner   => 'ubuntu',
   group   => 'ubuntu',
@@ -56,11 +56,20 @@ file { '/data':
   recurse => true,
 }
 
-# Update the Nginx configuration to serve the web static content
-file { '/etc/nginx/sites-available/default':
-  ensure  => file,
-  mode    => '0644',
-  content => template('nginx/default.erb'),
+# # Update the Nginx configuration to serve the web static content
+# file { '/etc/nginx/sites-available/default':
+#   ensure  => file,
+#   mode    => '0644',
+#   content => template('nginx/default.erb'),
+#   notify  => Service['nginx'],
+# }
+
+# Update the Nginx configuration to serve the web static content using sed command
+exec { 'update_nginx_config':
+  command =>
+    'sudo sed -i \'s/^server\s*{\s*$/server {\n\tlocation \/hbnb_static {\n\t\talias \/data\/web_static\/current;\n\t}/\' /etc/nginx/sites-available/default'
+  ,
+  onlyif  => 'test ! $(grep -q "location /hbnb_static" /etc/nginx/sites-available/default)',
   notify  => Service['nginx'],
 }
 
