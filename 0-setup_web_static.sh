@@ -7,7 +7,7 @@ sudo mkdir -p /data/web_static/releases/test
 sudo mkdir -p /data/web_static/shared
 
 # Create a symbolic link to the test release directory
-ln -sf /data/web_static/releases/test /data/web_static/current
+sudo ln -sf /data/web_static/releases/test /data/web_static/current
 
 # Create a test HTML file in the test release directory
 cat << EOF > /data/web_static/releases/test/index.html
