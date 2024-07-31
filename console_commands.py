@@ -4,8 +4,8 @@ This module defines a set of commands used in an AirBnB application.
 """
 from abc import ABC, abstractmethod
 
-from utils import parse_value, parse_params
 from models.dict_wrapper import FrozenDict, SealedDict
+from utils import parse_value, parse_params
 
 
 class AirBnBCommand(ABC):
@@ -264,8 +264,8 @@ class ShowCommand(AirBnBCommand):
         Parameters:
             tokens (list): A list of tokens representing the object to show.
         """
-        self.__tokens['class_name'] = tokens[0]
-        self.__tokens['instance_id'] = tokens[1]
+        for key, value in zip(self.__tokens, tokens):
+            self.__tokens[key] = value
 
     def reset_tokens(self):
         """Resets command tokens."""
@@ -549,7 +549,7 @@ class UpdateWithNameValuePairCommand(AbstractUpdateCommand):
             return
 
         attribute_name_value_pair = self.get_attribute_name_value_pair(
-                                                        self.__tokens)
+            self.__tokens)
 
         if not attribute_name_value_pair:
             return

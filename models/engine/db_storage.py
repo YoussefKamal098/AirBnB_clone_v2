@@ -12,9 +12,11 @@ Classes:
 """
 
 import os
+
 from sqlalchemy import create_engine, func
-from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker, scoped_session
+
 from models.base_model import Base
 from models.engine.storage import Storage
 
@@ -223,10 +225,9 @@ class DBStorage(Storage):
             return
 
         try:
-            self.__session.query(obj.__class__)\
-                .filter_by(id=obj.id).update(kwargs)
-
             self.__session.refresh(obj)
+            self.__session.query(obj.__class__) \
+                .filter_by(id=obj.id).update(kwargs)
             self.__session.flush()
         except SQLAlchemyError as err:
             self.__session.rollback()
@@ -254,9 +255,12 @@ class DBStorage(Storage):
 
     def close(self):
         """
-        Closes the current database session.
+        Remove the current SQLAlchemy session.
+
+        This method is intended to close the current SQLAlchemy session,
+        ensuring that any resources held by the session are released.
         """
-        self.__session.close()
+        self.__session.remove()
 
     def _class_to_dict(self, class_name, instances):
         """

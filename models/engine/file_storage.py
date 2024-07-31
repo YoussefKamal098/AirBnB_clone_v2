@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 """FileStorage module - Handles file storage operations for objects"""
 
-import os
 import json
+import os
 
 from models.engine.storage import Storage
 
@@ -168,8 +168,14 @@ class FileStorage(Storage):
                    if key.startswith(class_name))
 
     def close(self):
-        """Clean up the storage connection"""
-        pass
+        """
+        Reload the object state from the database.
+
+        This method is intended to refresh the current instance with the latest
+        data from the database, ensuring that any changes made by other
+        transactions are reflected in the current instance.
+        """
+        self.reload()
 
     def _deserialize(self, dictionary):
         """
