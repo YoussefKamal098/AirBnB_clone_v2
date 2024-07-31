@@ -19,6 +19,7 @@ def hbnb():
     return 'HBNB'
 
 
+@app.route('/python')
 @app.route('/python/<text>')
 def c_is_fun(text='is cool'):
     return f'Python {text}'.replace('_', ' ')
