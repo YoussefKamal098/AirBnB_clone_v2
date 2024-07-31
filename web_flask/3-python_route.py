@@ -21,7 +21,7 @@ def hbnb():
 
 @app.route('/python/<text>')
 def c_is_fun(text='is cool'):
-    return f'C {text}'.replace('_', ' ')
+    return f'Python {text}'.replace('_', ' ')
 
 
 if __name__ == '__main__':
