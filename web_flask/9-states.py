@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """
-Flask web application to display a list of states and details of a specific state.
+Flask web application to display a list of states and
+details of a specific state.
 """
 
 from flask import Flask
