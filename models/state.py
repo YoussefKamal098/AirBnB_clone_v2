@@ -27,7 +27,7 @@ class State(*parent_classes):
     if STORAGE_TYPE == "db":
         __tablename__ = 'states'
 
-        name = Column(String(128), nullable=False, unique=True, index=True)
+        name = Column(String(128), nullable=False, index=True)
         cities = relationship('City', back_populates='state',
                               passive_deletes=True)
     else:
