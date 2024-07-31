@@ -31,7 +31,7 @@ def python_is_cool(text='is cool'):
 
 
 @app.route('/number/<int:n>')
-def c_is_fun(n):
+def number(n):
     return f'{n} is a number'
 
 
