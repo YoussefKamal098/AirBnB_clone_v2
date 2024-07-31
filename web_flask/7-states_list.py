@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """
-This script creates a simple web application using the Flask framework that lists all states.
+This script creates a simple web application using the
+Flask framework that lists all states.
 """
 
 from flask import Flask, render_template
